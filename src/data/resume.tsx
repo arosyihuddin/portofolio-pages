@@ -8,9 +8,9 @@ export const DATA = {
   location: "East Java, Indonesia",
   locationLink: "#",
   description:
-    "Bangkit Academy 2023 Machine Learning Graduates. Graduate of Informatics Engineering from Trunojoyo Madura University. Machine Learning Enthusiast. Software Engineer",
+    "Software Engineer & Machine Learning Enthusiast",
   summary:
-    "As an upcoming graduate in Informatics Engineering from Universitas Trunojoyo Madura, my journey has been rich with hands-on experience, notably as a Student Laboratory Assistant where I honed my project management skills. Our team facilitated programming education, ensuring students grasped complex concepts efficiently. My passion for machine learning was further ignited through specialized training at Bangkit Academy and Baparekraf Digital Talent, empowering me with a robust understanding of AI applications. Complementing this is my proficiency in Microsoft Office, which has been instrumental in managing projects and streamlining workflows.",
+    "As a graduate of Informatics Engineering from Universitas Trunojoyo Madura, I have developed strong software engineering skills through various hands-on experiences, particularly as a Student Laboratory Assistant, where I refined my project management abilities. Our team played a key role in delivering programming education, helping students grasp complex concepts effectively.\n\nWhile my primary focus is on software engineering, I also have a keen interest in machine learning, which I explored through specialized training at Bangkit Academy and Baparekraf Digital Talent. Additionally, my proficiency in Microsoft Office has been crucial in managing projects and optimizing workflows.",
   avatarUrl: "/me.jpeg",
   skills: [
     "Python",
