@@ -10,25 +10,29 @@ export const DATA = {
   description:
     "Software Engineer & Machine Learning Enthusiast",
   summary:
-    "As a graduate of Informatics Engineering from Universitas Trunojoyo Madura, I have developed strong software engineering skills through various hands-on experiences, particularly as a Student Laboratory Assistant, where I refined my project management abilities. Our team played a key role in delivering programming education, helping students grasp complex concepts effectively.\n\nWhile my primary focus is on software engineering, I also have a keen interest in machine learning, which I explored through specialized training at Bangkit Academy and Baparekraf Digital Talent. Additionally, my proficiency in Microsoft Office has been crucial in managing projects and optimizing workflows.",
+    "I am a Software Engineer and a Machine Learning Enthusiast with a strong foundation in Informatics Engineering, honed at Universitas Trunojoyo Madura. My journey into technology has been enriched through hands-on experiences, particularly as a Student Laboratory Assistant. In this role, I not only deepened my technical expertise but also developed project management skills, delivering impactful programming education that empowered students to grasp complex concepts effectively.\n\nMy professional interests extend beyond software engineering to include machine learning. I have expanded my knowledge in this domain through specialized training at Bangkit Academy and Baparekraf Digital Talent. These experiences have equipped me with the skills to build intelligent systems and solve real-world problems.\n\nIn addition to my technical skills, I bring proficiency in Microsoft Office, which has been instrumental in managing projects, improving communication, and streamlining workflows. I am passionate about continuous learning and innovation, striving to create solutions that make a difference.",
   avatarUrl: "/me.jpeg",
   skills: [
-    "Python",
-    "PHP",
     "JavaScript",
     "Node JS",
+    "Express JS",
+    "TypeScript",
+    "GraphQL",
+    "MySQL",
+    "Rest API",
+    "PHP",
+    "Laravel",
     "HTML",
     "CSS",
-    "Linux",
-    "Git",
-    "MySQL",
-    "Laravel",
     "Next JS",
+    "Python",
     "Scikit-Learn",
     "PyTorch",
     "Tensorflow",
-    "Docker",
     "Matplotlib",
+    "Linux",
+    "Docker",
+    "Git",
   ],
   navbar: [
     { href: "/", icon: HomeIcon, label: "Home" },
@@ -38,7 +42,7 @@ export const DATA = {
   ],
   contact: {
     email: "rosyihuddin.dev@gmail.com",
-    tel: "+123456789",
+    // tel: "+123456789",
     social: {
       GitHub: {
         name: "GitHub",
@@ -73,10 +77,22 @@ export const DATA = {
 
   work: [
     {
+      company: "Software Engineer",
+      href: "https://eraindonesia.com/",
+      badges: [],
+      location: "On-Site",
+      title: "Backend Development",
+      logoUrl: "/logoera.png",
+      start: "Oct 2024",
+      end: "Present",
+      description:
+        "As a Backend Developer at ERA Kita Surabaya, I specialize in creating efficient server-side applications using Node.js, Express, GraphQL, and TypeORM. My role involves designing and implementing robust APIs, optimizing database interactions with MySQL, and leveraging Redis for caching to enhance system performance. Collaborating with cross-functional teams, I ensure seamless integration between backend systems and client-facing applications, all while maintaining scalability and reliability in an on-site environment.",
+    },
+    {
       company: "Student Laboratory Assistant",
       href: "https://www.trunojoyo.ac.id/",
       badges: [],
-      location: "Remote",
+      location: "On-Site",
       title: "Web Development",
       logoUrl: "/utm.png",
       start: "Feb 2023",
