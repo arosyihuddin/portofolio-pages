@@ -77,7 +77,7 @@ export const DATA = {
 
   work: [
     {
-      company: "Software Engineer",
+      company: "Era Real Estate",
       href: "https://eraindonesia.com/",
       badges: [],
       location: "On-Site",
