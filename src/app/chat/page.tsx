@@ -11,7 +11,7 @@ import { contextData } from '@/data/contextData';
 const BLUR_FADE_DELAY = 0.04;
 
 const together = new Together({
-    apiKey: process.env.NEXT_PUBLIC_TOGETHER_AI_API_KEY
+    apiKey: process.env.NEXT_PUBLIC_TOGETHER_API_KEY
 });
 
 interface Message {
