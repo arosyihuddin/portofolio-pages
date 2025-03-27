@@ -1,5 +1,5 @@
 import { Icons } from "@/components/icons";
-import { HomeIcon, NotebookIcon, Code, NotebookPen } from "lucide-react";
+import { HomeIcon, NotebookIcon, Code, NotebookPen, BotMessageSquare } from "lucide-react";
 
 export const DATA = {
   name: "Ahmad Rosyihuddin",
@@ -38,7 +38,8 @@ export const DATA = {
     { href: "/", icon: HomeIcon, label: "Home" },
     // { href: "/blog", icon: NotebookIcon, label: "Blog" },
     { href: "/projects", icon: Code, label: "Projects" },
-    { href: "/notes", icon: NotebookPen, label: "Notes" },
+    // { href: "/notes", icon: NotebookPen, label: "Notes" },
+    { href: "/chat", icon: BotMessageSquare, label: "Assistant" },
   ],
   contact: {
     email: "rosyihuddin.dev@gmail.com",
@@ -215,7 +216,7 @@ export const DATA = {
       dates: "March 2023",
       active: true,
       description:
-      "This project is a request from my brother who works at a savings and loan cooperative in my home area. the system in this project can create letters by simply inputting the data through the form so that the letter is ready to print. the creation itself uses PHP version 8 and Laravel Version 9.",
+        "This project is a request from my brother who works at a savings and loan cooperative in my home area. the system in this project can create letters by simply inputting the data through the form so that the letter is ready to print. the creation itself uses PHP version 8 and Laravel Version 9.",
       technologies: [
         "Laravel",
         "Mysql",
@@ -289,7 +290,7 @@ export const DATA = {
   notes: [
     {
       title: "Thesis",
-      dates : "27 Jul 2024",
+      dates: "27 Jul 2024",
       description: "Coming Soon",
       location: "Trunojoyo University",
       links: [
@@ -299,7 +300,7 @@ export const DATA = {
           href: "#"
         },
       ],
-      image:"/utm.png"
+      image: "/utm.png"
     }
   ]
 } as const;
