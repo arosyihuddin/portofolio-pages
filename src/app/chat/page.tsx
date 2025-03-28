@@ -211,7 +211,7 @@ export default function ChatPage() {
 
                     {/* Chat Container */}
                     <BlurFade delay={BLUR_FADE_DELAY * 11}>
-                        <Card className="h-[670px] flex flex-col">
+                        <Card className="h-[600px] flex flex-col">
                             <div className='border-b'></div>
                             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 relative hide-scrollbar">
                                 {isLoadingHistory ? (
