@@ -5,15 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 // import { Input } from "@/components/ui/input";
 import { Send, Trash } from 'lucide-react';
-import Together from "together-ai";
+// Lazy-load Together client to avoid dev-time side effects
 import { contextData } from '@/data/contextData';
 import ReactMarkdown from 'react-markdown';
 
 const BLUR_FADE_DELAY = 0.04;
 
-const together = new Together({
-    apiKey: process.env.NEXT_PUBLIC_TOGETHER_API_KEY
-});
+// Together client is created on demand inside the handler
 
 interface Message {
     role: 'user' | 'assistant' | 'system';
@@ -108,6 +106,16 @@ export default function ChatPage() {
             // Modify last message with contextData
             if (history_copy.length > 0) {
                 history_copy[history_copy.length - 1].content = contextData(history_copy[history_copy.length - 1].content);
+            }
+
+            // Dynamically import Together SDK to avoid startup errors
+            const { default: Together } = await import('together-ai');
+            const together = new Together({
+                apiKey: process.env.NEXT_PUBLIC_TOGETHER_API_KEY,
+            });
+
+            if (!process.env.NEXT_PUBLIC_TOGETHER_API_KEY) {
+                throw new Error('Missing Together API key');
             }
 
             const response = await together.chat.completions.create({
@@ -261,7 +269,8 @@ export default function ChatPage() {
                                                                     <div className="prose prose-sm dark:prose-invert max-w-none">
                                                                         <ReactMarkdown
                                                                             components={{
-                                                                                code({inline, className, children, ...props}) {
+                                                                                code(codeProps: any) {
+                                                                                    const { inline, className, children, ...props } = codeProps || {};
                                                                                     const match = /language-(\w+)/.exec(className || '');
                                                                                     if (inline) {
                                                                                         return <code className={`px-1 py-0.5 rounded bg-background/60 text-foreground ${className || ''}`} {...props}>{children}</code>;

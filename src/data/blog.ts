@@ -1,11 +1,6 @@
 import fs from "fs";
 import matter from "gray-matter";
 import path from "path";
-import rehypePrettyCode from "rehype-pretty-code";
-import rehypeStringify from "rehype-stringify";
-import remarkParse from "remark-parse";
-import remarkRehype from "remark-rehype";
-import { unified } from "unified";
 
 type Metadata = {
   title: string;
@@ -19,10 +14,17 @@ function getMDXFiles(dir: string) {
 }
 
 export async function markdownToHTML(markdown: string) {
+  // Lazy-load heavy MD/rehype deps to avoid side-effects during dev startup
+  const { unified } = await import("unified");
+  const remarkParse = (await import("remark-parse")).default;
+  const remarkRehype = (await import("remark-rehype")).default;
+  const rehypePrettyCode = (await import("rehype-pretty-code")).default;
+  const rehypeStringify = (await import("rehype-stringify")).default;
+
   const p = await unified()
-    .use(remarkParse)
-    .use(remarkRehype)
-    .use(rehypePrettyCode, {
+    .use(remarkParse as any)
+    .use(remarkRehype as any)
+    .use(rehypePrettyCode as any, {
       // https://rehype-pretty.pages.dev/#usage
       theme: {
         light: "min-light",
@@ -30,7 +32,7 @@ export async function markdownToHTML(markdown: string) {
       },
       keepBackground: false,
     })
-    .use(rehypeStringify)
+    .use(rehypeStringify as any)
     .process(markdown);
 
   return p.toString();
