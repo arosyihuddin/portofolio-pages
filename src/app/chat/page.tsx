@@ -3,10 +3,11 @@ import { useState, FormEvent, useRef, useEffect } from 'react';
 import BlurFade from "@/components/magicui/blur-fade";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import { Send, Trash } from 'lucide-react';
 import Together from "together-ai";
 import { contextData } from '@/data/contextData';
+import ReactMarkdown from 'react-markdown';
 
 const BLUR_FADE_DELAY = 0.04;
 
@@ -26,7 +27,7 @@ export default function ChatPage() {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [isMounted, setIsMounted] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
     const clearChat = () => {
@@ -137,10 +138,24 @@ export default function ChatPage() {
             }
         } catch (error) {
             console.error('API Error:', error);
-            setMessages(prev => [...prev, {
-                role: 'assistant',
-                content: 'Maaf, terjadi kesalahan. Silakan coba lagi.'
-            }]);
+            // Ubah bubble streaming terakhir menjadi pesan error dan hentikan loading
+            setMessages(prev => {
+                const newMessages = [...prev];
+                const lastIdx = newMessages.length - 1;
+                if (lastIdx >= 0 && newMessages[lastIdx].role === 'assistant') {
+                    newMessages[lastIdx] = {
+                        ...newMessages[lastIdx],
+                        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.',
+                        isStreaming: false,
+                    };
+                } else {
+                    newMessages.push({
+                        role: 'assistant',
+                        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.'
+                    });
+                }
+                return newMessages;
+            });
         } finally {
             setIsLoading(false);
             setTimeout(() => {
@@ -211,9 +226,9 @@ export default function ChatPage() {
 
                     {/* Chat Container */}
                     <BlurFade delay={BLUR_FADE_DELAY * 11}>
-                        <Card className="h-[600px] flex flex-col">
+                        <Card className="flex flex-col h-[70dvh] sm:h-[75dvh] md:h-[70dvh]">
                             <div className='border-b'></div>
-                            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 relative hide-scrollbar">
+                            <CardContent className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 relative hide-scrollbar">
                                 {isLoadingHistory ? (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -238,17 +253,39 @@ export default function ChatPage() {
                                                             key={index}
                                                             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
                                                         >
-                                                            <div className={`max-w-[80%] p-3 rounded-lg transition-all duration-300 ${message.role === 'user'
+                                                            <div className={`max-w-[85%] sm:max-w-[75%] p-3 rounded-lg transition-all duration-300 break-words ${message.role === 'user'
                                                                 ? 'bg-primary text-primary-foreground'
                                                                 : 'bg-muted'
                                                                 }`}>
-                                                                {message.content}
-                                                                {message.isStreaming && (
-                                                                    <div className="typing-indicator">
-                                                                        <div className="dot"></div>
-                                                                        <div className="dot"></div>
-                                                                        <div className="dot"></div>
+                                                                {message.role === 'assistant' ? (
+                                                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                                        <ReactMarkdown
+                                                                            components={{
+                                                                                code({inline, className, children, ...props}) {
+                                                                                    const match = /language-(\w+)/.exec(className || '');
+                                                                                    if (inline) {
+                                                                                        return <code className={`px-1 py-0.5 rounded bg-background/60 text-foreground ${className || ''}`} {...props}>{children}</code>;
+                                                                                    }
+                                                                                    return (
+                                                                                        <pre className="overflow-x-auto rounded-md bg-background/80 p-3 text-sm">
+                                                                                            <code className={`${match ? `language-${match[1]}` : ''}`} {...props}>{children}</code>
+                                                                                        </pre>
+                                                                                    );
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            {message.content}
+                                                                        </ReactMarkdown>
+                                                                        {message.isStreaming && (
+                                                                            <div className="typing-indicator mt-2">
+                                                                                <div className="dot"></div>
+                                                                                <div className="dot"></div>
+                                                                                <div className="dot"></div>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
+                                                                ) : (
+                                                                    <div className="whitespace-pre-wrap">{message.content}</div>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -262,8 +299,8 @@ export default function ChatPage() {
                             </CardContent>
 
                             {/* Input Form */}
-                            <div className="border-t p-4">
-                                <div className="flex items-center gap-3">
+                            <div className="border-t p-3 sm:p-4">
+                                <div className="flex items-center gap-2 sm:gap-3">
                                     {/* Clear Chat Button */}
                                     <Button
                                         onClick={clearChat}
@@ -278,13 +315,22 @@ export default function ChatPage() {
                                     {/* Input Form */}
                                     <form onSubmit={sendMessage} className="flex-1">
                                         <div className="flex gap-2">
-                                            <Input
+                                            <textarea
                                                 ref={inputRef}
                                                 value={input}
                                                 onChange={(e) => setInput(e.target.value)}
                                                 placeholder="Ask something about Rosik..."
-                                                className="flex-1"
+                                                rows={1}
+                                                className="flex-1 min-h-[44px] max-h-40 resize-y rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                 disabled={isLoading}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                        e.preventDefault();
+                                                        if (input.trim()) {
+                                                            (e.currentTarget.form as HTMLFormElement)?.requestSubmit();
+                                                        }
+                                                    }
+                                                }}
                                             />
                                             <Button
                                                 type="submit"
@@ -348,6 +394,11 @@ export default function ChatPage() {
         .typing-indicator .dot:nth-child(3) {
             animation-delay: 0.4s;
         }
+
+        /* Markdown tweaks inside chat bubbles */
+        .prose pre { background: rgba(0,0,0,0.04); padding: 0.75rem; border-radius: 0.5rem; }
+        .dark .prose pre { background: rgba(255,255,255,0.06); }
+        .prose code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
         @keyframes fade-in-up {
             0% {

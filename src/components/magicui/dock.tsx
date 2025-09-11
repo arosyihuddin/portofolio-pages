@@ -48,8 +48,25 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
     return (
       <motion.div
         ref={ref}
-        onMouseMove={(e) => mousex.set(e.pageX)}
-        onMouseLeave={() => mousex.set(Infinity)}
+        // Use pointer events to avoid sticky hover on touch devices
+        onPointerMove={(e) => {
+          if ((e as any).pointerType === "mouse") {
+            mousex.set(e.pageX);
+          } else {
+            mousex.set(Infinity);
+          }
+        }}
+        onPointerLeave={() => mousex.set(Infinity)}
+        onPointerDown={(e) => {
+          if ((e as any).pointerType !== "mouse") {
+            mousex.set(Infinity);
+          }
+        }}
+        onPointerUp={(e) => {
+          if ((e as any).pointerType !== "mouse") {
+            mousex.set(Infinity);
+          }
+        }}
         {...props}
         className={cn(dockVariants({ className }))}
       >
