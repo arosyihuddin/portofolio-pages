@@ -4,7 +4,7 @@ import { HomeIcon, NotebookIcon, Code, NotebookPen, BotMessageSquare } from "luc
 export const DATA = {
   name: "Ahmad Rosyihuddin",
   initials: "AR",
-  url: "https://rosyihuddin.tech",
+  url: "https://arosyihuddin.my.id",
   location: "East Java, Indonesia",
   locationLink: "#",
   description:

@@ -1,8 +1,17 @@
 import BlurFade from "@/components/magicui/blur-fade";
 import { NotesCard } from "@/components/notes-card"
 import { DATA } from "@/data/resume";
+import type { Metadata } from "next";
 
 const BLUR_FADE_DELAY = 0.04;
+
+export const metadata: Metadata = {
+  title: "Notes",
+  description: "Notes and learnings by Ahmad Rosyihuddin.",
+  alternates: {
+    canonical: "/notes",
+  },
+};
 
 export default function Page() {
     return (

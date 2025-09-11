@@ -1,8 +1,17 @@
 import BlurFade from "@/components/magicui/blur-fade";
 import { ProjectCard } from "@/components/project-card";
 import { DATA } from "@/data/resume";
+import type { Metadata } from "next";
 
 const BLUR_FADE_DELAY = 0.04;
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/projects",
+  },
+  title: "Projects",
+  description: "Selected work and projects by Ahmad Rosyihuddin.",
+};
 
 export default function Page() {
   return (

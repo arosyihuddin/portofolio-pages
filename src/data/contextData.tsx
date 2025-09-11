@@ -6,7 +6,7 @@ export function contextData(query: string) {
     ### **Identitas & Kontak**
     - **Nama**: Ahmad Rosyihuddin
     - **Email**: rosyihuddin.dev@gmail.com
-    - **Portofolio**: [arosyihuddin.site](https://www.arosyihuddin.site/)
+    - **Portofolio**: [arosyihuddin.my.id](https://arosyihuddin.my.id/)
     - **LinkedIn & GitHub**: Tautan tersedia di portofolio.
 
     ### **Pendidikan**
@@ -54,10 +54,10 @@ export function contextData(query: string) {
     - **Sistem Operasi**: Linux
 
     ### **Tautan Penting**
-    1. Portofolio Resmi: [arosyihuddin.site](https://www.arosyihuddin.site/)
+    1. Portofolio Resmi: [arosyihuddin.my.id](https://arosyihuddin.my.id/)
     2. Proyek LegalNER: [Hugging Face – LegalNER](https://huggingface.co/spaces/arosyihuddin/gradio-LegalNER)
 
-    Berikut penjelasan lengkap berdasarkan konten situs **https://www.arosyihuddin.site/**, dengan integrasi informasi dari **web_search** untuk memperkaya konteks:
+    Berikut penjelasan lengkap berdasarkan konten situs **https://arosyihuddin.my.id/**, dengan integrasi informasi dari **web_search** untuk memperkaya konteks:
 
     ### **Profil Utama**
     **Ahmad Rosyihuddin** (dikenal sebagai **Rosik**) adalah seorang *Software Engineer* dan *Machine Learning Enthusiast* dengan latar belakang pendidikan **Teknik Informatika** dari Universitas Trunojoyo Madura (2020–2024). Profilnya mencerminkan kombinasi kemampuan teknis dan minat dalam pengembangan solusi berbasis AI, yang selaras dengan tren *personal branding* yang menekankan nilai diri melalui keahlian spesifik.
@@ -153,7 +153,7 @@ export function contextData(query: string) {
     Peran ini tidak hanya melatih keterampilan teknis (pemrograman dan jaringan) tetapi juga manajemen proyek, seperti yang dijelaskan dalam struktur *report text* yang bertujuan menyampaikan informasi berbasis fakta.
 
     **Kontak dan Portofolio**:
-    - Situs pribadi ([arosyihuddin.site](https://www.arosyihuddin.site)) dan repositori GitHub menunjukkan transparansi dalam membangun *personal branding*, suatu strategi penting untuk meningkatkan nilai profesional.
+    - Situs pribadi ([arosyihuddin.my.id](https://arosyihuddin.my.id)) dan repositori GitHub menunjukkan transparansi dalam membangun *personal branding*, suatu strategi penting untuk meningkatkan nilai profesional.
 
 
     ### **Pengalaman Profesional dan Pelatihan**
