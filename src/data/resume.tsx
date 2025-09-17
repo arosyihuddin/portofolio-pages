@@ -1,5 +1,11 @@
 import { Icons } from "@/components/icons";
-import { HomeIcon, NotebookIcon, Code, NotebookPen, BotMessageSquare } from "lucide-react";
+import {
+  HomeIcon,
+  NotebookIcon,
+  Code,
+  NotebookPen,
+  BotMessageSquare,
+} from "lucide-react";
 
 export const DATA = {
   name: "Ahmad Rosyihuddin",
@@ -7,32 +13,25 @@ export const DATA = {
   url: "https://arosyihuddin.my.id",
   location: "East Java, Indonesia",
   locationLink: "#",
-  description:
-    "Software Engineer & Machine Learning Enthusiast",
+  description: "Software Engineer & Machine Learning Enthusiast",
   summary:
-    "I am a Software Engineer and a Machine Learning Enthusiast with a strong foundation in Informatics Engineering, honed at Universitas Trunojoyo Madura. My journey into technology has been enriched through hands-on experiences, particularly as a Student Laboratory Assistant. In this role, I not only deepened my technical expertise but also developed project management skills, delivering impactful programming education that empowered students to grasp complex concepts effectively.\n\nMy professional interests extend beyond software engineering to include machine learning. I have expanded my knowledge in this domain through specialized training at Bangkit Academy and Baparekraf Digital Talent. These experiences have equipped me with the skills to build intelligent systems and solve real-world problems.\n\nIn addition to my technical skills, I bring proficiency in Microsoft Office, which has been instrumental in managing projects, improving communication, and streamlining workflows. I am passionate about continuous learning and innovation, striving to create solutions that make a difference.",
+    "Experienced Software Engineer and AI Infrastructure Builder, specializing in scalable backend systems and intelligent automation. Skilled in Node.js, FastAPI, MySQL, PostgreSQL, Redis, and TypeORM, with hands-on experience deploying self-hosted infrastructure (Docker, Cloudflare Tunnel, Nginx, ESXi). \n\nCurrently exploring advanced AI integrations, including custom multi-agent RAG pipelines and LLM tool-calling workflows. Author of **[qwen-api](https://github.com/arosyihuddin/qwen-api)** (unofficial Python SDK for Qwen AI) and **[qwen-cline](https://github.com/arosyihuddin/qwen-cline)** (Dockerized API for Cline, n8n, and OpenAI clients). \n\nPassionate about improving developer experience, building automation pipelines, and bridging backend engineering with practical AI applications.",
   avatarUrl: "/me.jpeg",
   skills: [
-    "JavaScript",
     "Node JS",
     "Express JS",
     "TypeScript",
     "GraphQL",
-    "MySQL",
+    "PostgreSQL",
     "Rest API",
-    "PHP",
-    "Laravel",
-    "HTML",
-    "CSS",
     "Next JS",
     "Python",
-    "Scikit-Learn",
     "PyTorch",
     "Tensorflow",
-    "Matplotlib",
     "Linux",
     "Docker",
     "Git",
+    "Proxmox & Esxi Server",
   ],
   navbar: [
     { href: "/", icon: HomeIcon, label: "Home" },
@@ -139,18 +138,67 @@ export const DATA = {
   ],
   projects: [
     {
+      title: "Qwen-Cline",
+      href: "https://github.com/arosyihuddin/qwen-cline",
+      dates: "Mei 2026 - Present",
+      active: true,
+      description:
+        "**qwen-cline** is a **Dockerized API service** for Qwen AI models, designed for easy integration with multiple platforms. It provides an OpenAI-compatible API interface, supporting both chat generation and tool-calling workflows. Compatible with **Cline**, **n8n** (via Ollama node), and any client that uses the OpenAI API format.",
+      technologies: ["Python", "FastAPI", "Docker"],
+      links: [
+        {
+          type: "Github",
+          href: "https://github.com/arosyihuddin/qwen-cline",
+          icon: <Icons.github className="size-3" />,
+        },
+      ],
+      image: "/qwen-cline.jpeg",
+      video: "",
+    },
+    {
+      title: "Qwen-API",
+      href: "https://github.com/arosyihuddin/qwen-api",
+      dates: "Mei 2025 - Present",
+      active: true,
+      description:
+        "**qwen-api** is an **unofficial Python SDK** for interacting with Qwen AI models. It supports chat completions, streaming responses, asynchronous calls, and file uploads via Aliyun OSS with HMAC v4 authentication. Designed to be easily integrated into backend services and automation workflows.",
+      technologies: ["Python", "httpx", "OOP"],
+      links: [
+        {
+          type: "Github",
+          href: "https://github.com/arosyihuddin/qwen-api",
+          icon: <Icons.github className="size-3" />,
+        },
+      ],
+      image: "/qwen-api.jpeg",
+      video: "",
+    },
+    {
+      title: "Searxng-Wrapper",
+      href: "https://github.com/arosyihuddin/searxng-wrapper",
+      dates: "Mei 2026 - Present",
+      active: true,
+      description:
+        "**searxng-wrapper** is a **lightweight Python wrapper** for interacting with [SearXNG](https://docs.searxng.org/) — a powerful, privacy-respecting metasearch engine. It provides a simple interface for performing search queries and retrieving results in a structured format, making it easy to integrate SearXNG into Python scripts, backend services, or automation workflows.",
+      technologies: ["Python", "OOP"],
+      links: [
+        {
+          type: "Github",
+          href: "https://github.com/arosyihuddin/searxng-wrapper",
+          icon: <Icons.github className="size-3" />,
+        },
+      ],
+      image: "/searxng-wrapper.jpeg",
+      video: "",
+    },
+    {
       title: "Legal NER",
       href: "https://huggingface.co/spaces/arosyihuddin/gradio-LegalNER",
       dates: "Mar 2024 - Jul 2024",
       active: true,
       description:
         "This application implements BERT to automatically identify legal entities in Indonesian court decision documents. The system is designed to facilitate the extraction of entities such as names, institutions, and legal terms, which are important in the processing and analysis of legal documents.",
-      technologies: [
-        "Python",
-        "PyTorch",
-        "Gradio",
-        "BERT",
-      ],
+      technologies: ["Python", "PyTorch", "Gradio", "BERT"],
       links: [
         {
           type: "Website",
@@ -159,7 +207,7 @@ export const DATA = {
         },
       ],
       image: "/legalNER.png",
-      video: ""
+      video: "",
     },
     {
       title: "Tani Tama Capstone Project",
@@ -178,13 +226,13 @@ export const DATA = {
       ],
       links: [
         {
-          type: "Source",
+          type: "Github",
           href: "https://github.com/Bangkit-Capstone-C23-PC639",
           icon: <Icons.github className="size-3" />,
         },
       ],
       image: "/tanitama.png",
-      video: ""
+      video: "",
     },
     {
       title: "Sentiment Analysis of Surabaya Zoo",
@@ -193,16 +241,10 @@ export const DATA = {
       active: true,
       description:
         "This project is a college assignment from my friend, I was told to help make it so I helped make the code only without implementing it into the website. this project is entitled sentiment analysis of Surabaya zoo reviews using Support Vector Machine (SVM). the dataset used itself from Google Maps reviews, the data is taken by crawling.",
-      technologies: [
-        "Numpy",
-        "Pandas",
-        "Matplotlib",
-        "Python",
-        "Scikit-Learn",
-      ],
+      technologies: ["Numpy", "Pandas", "Matplotlib", "Python", "Scikit-Learn"],
       links: [
         {
-          type: "Source",
+          type: "Github",
           href: "https://github.com/arosyihuddin/sentimen-analisis-kebun-binatang-surabaya",
           icon: <Icons.github className="size-3" />,
         },
@@ -217,21 +259,16 @@ export const DATA = {
       active: true,
       description:
         "This project is a request from my brother who works at a savings and loan cooperative in my home area. the system in this project can create letters by simply inputting the data through the form so that the letter is ready to print. the creation itself uses PHP version 8 and Laravel Version 9.",
-      technologies: [
-        "Laravel",
-        "Mysql",
-        "Bootstrap",
-        "JQuery"
-      ],
+      technologies: ["Laravel", "Mysql", "Bootstrap", "JQuery"],
       links: [
         {
-          type: "Source",
+          type: "Github",
           href: "https://github.com/arosyihuddin/Koperasi-Simpan-Pinjam",
           icon: <Icons.github className="size-3" />,
         },
       ],
       image: "/koperasi.png",
-      video: ""
+      video: "",
     },
     {
       title: "Price Range Classification Based on Mobile Phone Specifications",
@@ -255,13 +292,13 @@ export const DATA = {
           icon: <Icons.globe className="size-3" />,
         },
         {
-          type: "Source",
+          type: "Github",
           href: "https://github.com/arosyihuddin/streamlit-datamining",
           icon: <Icons.github className="size-3" />,
         },
       ],
       image: "/datamining.png",
-      video: ""
+      video: "",
     },
     {
       title: "Super Banana",
@@ -270,21 +307,16 @@ export const DATA = {
       active: true,
       description:
         "Super Banana is a final project of the Software Project course, this project is done in groups of 4 people. This project raises the problem of a krispi banana seller who is very in demand so that many of the consumers have to queue very long resulting in consumers being bored waiting for it. therefore a krispi banana purchasing system was made called super banana, with this system consumers can buy krispi bananas from their boarding house without having to be bored waiting for orders. making this system using PHP version 8 and also laravel version 9.",
-      technologies: [
-        "Laravel",
-        "Mysql",
-        "Bootstrap",
-        "JQuery"
-      ],
+      technologies: ["Laravel", "Mysql", "Bootstrap", "JQuery"],
       links: [
         {
-          type: "Source",
+          type: "Github",
           href: "https://github.com/arosyihuddin/Super-Pisang",
           icon: <Icons.github className="size-3" />,
         },
       ],
       image: "/super pisang.png",
-      video: ""
+      video: "",
     },
   ],
   notes: [
@@ -297,10 +329,10 @@ export const DATA = {
         {
           title: "Source",
           icon: <Icons.github className="h-4 w-4" />,
-          href: "#"
+          href: "#",
         },
       ],
-      image: "/utm.png"
-    }
-  ]
+      image: "/utm.png",
+    },
+  ],
 } as const;
