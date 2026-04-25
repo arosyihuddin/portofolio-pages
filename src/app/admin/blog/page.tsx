@@ -6,6 +6,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Plus,
   Pencil,
   Trash2,
@@ -35,6 +45,10 @@ export default function AdminBlogList() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const supabase = createClient();
 
   const fetchPosts = async () => {
@@ -59,10 +73,13 @@ export default function AdminBlogList() {
     fetchPosts();
   }, []);
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
 
+    const { id } = deleteTarget;
     setDeleting(id);
+    setDeleteTarget(null);
+
     // Delete post-tag relations first
     await supabase.from("blog_post_tags").delete().eq("post_id", id);
     const { error } = await supabase.from("blog_posts").delete().eq("id", id);
@@ -236,7 +253,9 @@ export default function AdminBlogList() {
                     size="icon"
                     title="Delete"
                     className="text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(post.id, post.title)}
+                    onClick={() =>
+                      setDeleteTarget({ id: post.id, title: post.title })
+                    }
                     disabled={deleting === post.id}
                   >
                     {deleting === post.id ? (
@@ -251,6 +270,36 @@ export default function AdminBlogList() {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-medium text-foreground">
+                &ldquo;{deleteTarget?.title}&rdquo;
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
