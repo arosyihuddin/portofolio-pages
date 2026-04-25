@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   FileText,
   Brain,
+  Settings,
   LogOut,
   Loader2,
   ChevronLeft,
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/blog", icon: FileText, label: "Blog Posts" },
   { href: "/admin/context", icon: Brain, label: "AI Context" },
+  { href: "/admin/settings", icon: Settings, label: "LLM Settings" },
 ];
 
 export default function AdminLayout({

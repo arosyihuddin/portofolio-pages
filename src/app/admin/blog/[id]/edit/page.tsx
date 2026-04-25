@@ -14,10 +14,14 @@ import {
   ImageIcon,
   X,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
+import GenerateDialog, {
+  type GeneratedContent,
+} from "@/components/generate-dialog";
 import type { JSONContent } from "novel";
 
 const NovelEditor = dynamic(() => import("@/components/editor"), {
@@ -60,6 +64,8 @@ export default function EditBlogPost() {
   const [saving, setSaving] = useState(false);
   const [loadingPost, setLoadingPost] = useState(true);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
 
   // We store the initial HTML to pass to the editor
   const [initialHtml, setInitialHtml] = useState<string | null>(null);
@@ -224,6 +230,28 @@ export default function EditBlogPost() {
     }
   };
 
+  const handleGenerated = (result: GeneratedContent) => {
+    setTitle(result.title);
+    setSlug(slugify(result.title));
+    setSummary(result.summary);
+    setHtmlContent(result.content);
+    setInitialHtml(result.content);
+    setEditorKey((prev) => prev + 1);
+
+    if (result.suggestedTags.length > 0 && allTags.length > 0) {
+      const matchedTagIds = allTags
+        .filter((t) =>
+          result.suggestedTags.some(
+            (st) => st.toLowerCase() === t.name.toLowerCase() || st.toLowerCase() === t.slug,
+          ),
+        )
+        .map((t) => t.id);
+      if (matchedTagIds.length > 0) {
+        setSelectedTags((prev) => Array.from(new Set([...prev, ...matchedTagIds])));
+      }
+    }
+  };
+
   if (loadingPost) {
     return (
       <div className="flex justify-center py-20">
@@ -256,6 +284,13 @@ export default function EditBlogPost() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setGenerateOpen(true)}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate with AI
+          </Button>
           <Button
             variant="outline"
             onClick={() => savePost(published ? false : undefined)}
@@ -302,6 +337,7 @@ export default function EditBlogPost() {
 
           {initialHtml !== null && (
             <NovelEditor
+              key={editorKey}
               onChange={setContent}
               onHtmlChange={setHtmlContent}
               initialHtml={initialHtml || ""}
@@ -461,6 +497,13 @@ export default function EditBlogPost() {
           </Card>
         </div>
       </div>
+
+      {/* Generate with AI Dialog */}
+      <GenerateDialog
+        open={generateOpen}
+        onOpenChange={setGenerateOpen}
+        onGenerated={handleGenerated}
+      />
     </div>
   );
 }

@@ -13,11 +13,15 @@ import {
   ImageIcon,
   X,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import type { JSONContent } from "novel";
+import GenerateDialog, {
+  type GeneratedContent,
+} from "@/components/generate-dialog";
 
 const NovelEditor = dynamic(() => import("@/components/editor"), {
   ssr: false,
@@ -56,6 +60,8 @@ export default function NewBlogPost() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
 
   // Tags
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -204,6 +210,28 @@ export default function NewBlogPost() {
     }
   };
 
+  const handleGenerated = (result: GeneratedContent) => {
+    setTitle(result.title);
+    setSlug(slugify(result.title));
+    setSummary(result.summary);
+    setHtmlContent(result.content);
+    setEditorKey((prev) => prev + 1); // Force re-mount editor with new content
+
+    // Auto-select suggested tags that already exist
+    if (result.suggestedTags.length > 0 && allTags.length > 0) {
+      const matchedTagIds = allTags
+        .filter((t) =>
+          result.suggestedTags.some(
+            (st) => st.toLowerCase() === t.name.toLowerCase() || st.toLowerCase() === t.slug,
+          ),
+        )
+        .map((t) => t.id);
+      if (matchedTagIds.length > 0) {
+        setSelectedTags((prev) => Array.from(new Set([...prev, ...matchedTagIds])));
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -217,6 +245,13 @@ export default function NewBlogPost() {
           <h1 className="text-2xl font-bold tracking-tight">New Post</h1>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setGenerateOpen(true)}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate with AI
+          </Button>
           <Button
             variant="outline"
             onClick={() => savePost(false)}
@@ -257,6 +292,8 @@ export default function NewBlogPost() {
 
           {/* Editor */}
           <NovelEditor
+            key={editorKey}
+            initialHtml={htmlContent || undefined}
             onChange={setContent}
             onHtmlChange={setHtmlContent}
           />
@@ -417,6 +454,13 @@ export default function NewBlogPost() {
           </Card>
         </div>
       </div>
+
+      {/* Generate with AI Dialog */}
+      <GenerateDialog
+        open={generateOpen}
+        onOpenChange={setGenerateOpen}
+        onGenerated={handleGenerated}
+      />
     </div>
   );
 }
