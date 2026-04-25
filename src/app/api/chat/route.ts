@@ -1,46 +1,40 @@
-import { contextData } from '@/data/contextData';
+import { getAIContext } from '@/data/contextData';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
-const SYSTEM_MESSAGE: ChatMessage = {
-  role: 'system',
-  content:
-    'Anda adalah Jarvis asisten pribadi milik Ahmad Rosyihuddin. Untuk menjawab pertanyaan gunakan bahasa dari user.',
-};
-
 // ============================================
-// Provider abstraction
+// Provider config from ENV
 // ============================================
-
-type ProviderName = 'together' | 'openai' | 'groq' | 'google';
 
 interface ProviderConfig {
   apiKey: string;
   model: string;
-  provider: ProviderName;
+  baseUrl: string;
+  isGoogle: boolean;
 }
 
 function getProviderConfig(): ProviderConfig {
+  const provider = process.env.AI_PROVIDER || 'together';
   return {
-    provider: (process.env.AI_PROVIDER as ProviderName) || 'together',
-    model:
-      process.env.AI_MODEL || 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    baseUrl: process.env.AI_BASE_URL || 'https://api.together.xyz/v1',
+    model: process.env.AI_MODEL || 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
     apiKey: process.env.AI_API_KEY || '',
+    isGoogle: provider === 'google',
   };
 }
 
-/**
- * OpenAI-compatible streaming (works for Together, OpenAI, Groq)
- */
+// ============================================
+// OpenAI-compatible streaming
+// ============================================
+
 async function streamOpenAICompatible(
-  baseUrl: string,
   config: ProviderConfig,
   messages: ChatMessage[],
 ): Promise<ReadableStream> {
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -88,9 +82,7 @@ async function streamOpenAICompatible(
               const content = parsed.choices?.[0]?.delta?.content || '';
               if (content) {
                 controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ content })}\n\n`,
-                  ),
+                  encoder.encode(`data: ${JSON.stringify({ content })}\n\n`),
                 );
               }
             } catch {
@@ -100,11 +92,9 @@ async function streamOpenAICompatible(
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
-      } catch (err) {
+      } catch {
         controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ error: 'Stream error' })}\n\n`,
-          ),
+          encoder.encode(`data: ${JSON.stringify({ error: 'Stream error' })}\n\n`),
         );
         controller.close();
       }
@@ -112,14 +102,14 @@ async function streamOpenAICompatible(
   });
 }
 
-/**
- * Google Gemini streaming
- */
+// ============================================
+// Google Gemini streaming
+// ============================================
+
 async function streamGemini(
   config: ProviderConfig,
   messages: ChatMessage[],
 ): Promise<ReadableStream> {
-  // Convert messages to Gemini format
   const geminiMessages = messages
     .filter((m) => m.role !== 'system')
     .map((m) => ({
@@ -128,22 +118,16 @@ async function streamGemini(
     }));
 
   const systemInstruction = messages.find((m) => m.role === 'system');
-
   const model = config.model || 'gemini-2.0-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${config.apiKey}`;
 
   const body: any = {
     contents: geminiMessages,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 1000,
-    },
+    generationConfig: { temperature: 0.7, maxOutputTokens: 1000 },
   };
 
   if (systemInstruction) {
-    body.systemInstruction = {
-      parts: [{ text: systemInstruction.content }],
-    };
+    body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
   }
 
   const response = await fetch(url, {
@@ -184,9 +168,7 @@ async function streamGemini(
                 parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
               if (content) {
                 controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ content })}\n\n`,
-                  ),
+                  encoder.encode(`data: ${JSON.stringify({ content })}\n\n`),
                 );
               }
             } catch {
@@ -198,25 +180,13 @@ async function streamGemini(
         controller.close();
       } catch {
         controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ error: 'Stream error' })}\n\n`,
-          ),
+          encoder.encode(`data: ${JSON.stringify({ error: 'Stream error' })}\n\n`),
         );
         controller.close();
       }
     },
   });
 }
-
-// ============================================
-// Provider URL mapping
-// ============================================
-
-const PROVIDER_URLS: Record<string, string> = {
-  together: 'https://api.together.xyz/v1',
-  openai: 'https://api.openai.com/v1',
-  groq: 'https://api.groq.com/openai/v1',
-};
 
 // ============================================
 // Main handler
@@ -242,28 +212,31 @@ export async function POST(req: Request) {
       );
     }
 
-    // Ensure system message
-    const hasSystem = messages.some((m) => m.role === 'system');
-    const history: ChatMessage[] = hasSystem
-      ? [...messages]
-      : [SYSTEM_MESSAGE, ...messages];
+    // Get last user message for context enrichment
+    const lastMsg = messages[messages.length - 1];
+    let enrichedMessages: ChatMessage[];
 
-    // Enrich last user message with context
-    const enriched = history.map((msg, idx) => {
-      if (idx === history.length - 1 && msg.role === 'user') {
-        return { ...msg, content: contextData(msg.content) };
-      }
-      return msg;
-    });
+    if (lastMsg && lastMsg.role === 'user') {
+      // Fetch system prompt + context from database
+      const { systemMessage, contextPrompt } = await getAIContext(lastMsg.content);
+
+      // Build message history: system + previous messages + enriched last message
+      const prevMessages = messages.slice(0, -1).filter((m) => m.role !== 'system');
+      enrichedMessages = [
+        { role: 'system', content: systemMessage },
+        ...prevMessages,
+        { role: 'user', content: contextPrompt },
+      ];
+    } else {
+      enrichedMessages = messages;
+    }
 
     let stream: ReadableStream;
 
-    if (config.provider === 'google') {
-      stream = await streamGemini(config, enriched);
+    if (config.isGoogle) {
+      stream = await streamGemini(config, enrichedMessages);
     } else {
-      const baseUrl =
-        PROVIDER_URLS[config.provider] || PROVIDER_URLS.together;
-      stream = await streamOpenAICompatible(baseUrl, config, enriched);
+      stream = await streamOpenAICompatible(config, enrichedMessages);
     }
 
     return new Response(stream, {

@@ -3,7 +3,6 @@ import {
   HomeIcon,
   NotebookIcon,
   Code,
-  NotebookPen,
 } from "lucide-react";
 
 export const DATA = {
@@ -134,20 +133,4 @@ export const DATA = {
     },
   ],
   projectsUrl: "https://rlabs.arosyihuddin.com/",
-  notes: [
-    {
-      title: "Thesis",
-      dates: "27 Jul 2024",
-      description: "Coming Soon",
-      location: "Trunojoyo University",
-      links: [
-        {
-          title: "Source",
-          icon: <Icons.github className="h-4 w-4" />,
-          href: "#",
-        },
-      ],
-      image: "/utm.png",
-    },
-  ],
 } as const;

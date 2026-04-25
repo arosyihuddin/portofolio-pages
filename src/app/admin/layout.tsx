@@ -7,6 +7,7 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   FileText,
+  Brain,
   LogOut,
   Loader2,
   ChevronLeft,
@@ -19,6 +20,7 @@ import { Toaster } from "sonner";
 const NAV_ITEMS = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/blog", icon: FileText, label: "Blog Posts" },
+  { href: "/admin/context", icon: Brain, label: "AI Context" },
 ];
 
 export default function AdminLayout({
