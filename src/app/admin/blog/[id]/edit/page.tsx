@@ -304,23 +304,16 @@ export default function EditBlogPost() {
             <NovelEditor
               onChange={setContent}
               onHtmlChange={setHtmlContent}
-              initialContent={
-                initialHtml
-                  ? undefined
-                  : undefined
-              }
+              initialHtml={initialHtml || ""}
             />
           )}
-          {/* Note: Novel editor doesn't easily accept raw HTML as initial content.
-              For editing, the content is stored as HTML and re-rendered on the public page.
-              The editor starts fresh but the HTML is preserved in htmlContent state. */}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-4">
           {/* Slug */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Slug</label>
               <input
                 type="text"
@@ -333,8 +326,8 @@ export default function EditBlogPost() {
           </Card>
 
           {/* Summary */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Summary</label>
               <textarea
                 value={summary}
@@ -347,8 +340,8 @@ export default function EditBlogPost() {
           </Card>
 
           {/* Cover Image */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Cover Image</label>
               {coverImage ? (
                 <div className="relative">
@@ -391,8 +384,8 @@ export default function EditBlogPost() {
           </Card>
 
           {/* Tags */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Tags</label>
 
               {selectedTags.length > 0 && (

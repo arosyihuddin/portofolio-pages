@@ -16,6 +16,7 @@ import {
   createImageUpload,
   TiptapImage,
   TiptapLink,
+  TiptapUnderline,
   UpdatedImage,
   TaskList,
   TaskItem,
@@ -297,6 +298,7 @@ const extensions = [
   placeholder,
   tiptapLink,
   TiptapImage,
+  TiptapUnderline,
   UpdatedImage,
   taskList,
   taskItem,
@@ -309,12 +311,14 @@ const extensions = [
 // ============================================
 interface EditorProps {
   initialContent?: JSONContent;
+  initialHtml?: string;
   onChange: (content: JSONContent) => void;
   onHtmlChange?: (html: string) => void;
 }
 
 export default function NovelEditor({
   initialContent,
+  initialHtml,
   onChange,
   onHtmlChange,
 }: EditorProps) {
@@ -325,11 +329,16 @@ export default function NovelEditor({
       <EditorContent
         initialContent={initialContent}
         extensions={extensions}
-        className="relative min-h-[500px] w-full border rounded-md bg-background"
+        className="relative w-full border rounded-md bg-background"
         editorProps={{
           handleDOMEvents: {
-            keydown: (_view: any, event: any) =>
-              handleCommandNavigation(event),
+            keydown: (_view: any, event: any) => {
+              const slashMenu = document.querySelector("#slash-command");
+              if (slashMenu) {
+                return handleCommandNavigation(event);
+              }
+              return false;
+            },
           },
           handlePaste: (view: any, event: any) =>
             handleImagePaste(view, event, uploadFn),
@@ -337,8 +346,13 @@ export default function NovelEditor({
             handleImageDrop(view, event, moved, uploadFn),
           attributes: {
             class:
-              "prose prose-sm dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full p-4",
+              "prose prose-sm dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full min-h-[500px] p-4",
           },
+        }}
+        onCreate={({ editor }) => {
+          if (initialHtml) {
+            editor.commands.setContent(initialHtml);
+          }
         }}
         onUpdate={({ editor }) => {
           onChange(editor.getJSON());

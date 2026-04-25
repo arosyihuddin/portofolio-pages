@@ -265,8 +265,8 @@ export default function NewBlogPost() {
         {/* Sidebar */}
         <div className="space-y-4">
           {/* Slug */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Slug</label>
               <input
                 type="text"
@@ -279,8 +279,8 @@ export default function NewBlogPost() {
           </Card>
 
           {/* Summary */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Summary</label>
               <textarea
                 value={summary}
@@ -293,8 +293,8 @@ export default function NewBlogPost() {
           </Card>
 
           {/* Cover Image */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Cover Image</label>
               {coverImage ? (
                 <div className="relative">
@@ -337,8 +337,8 @@ export default function NewBlogPost() {
           </Card>
 
           {/* Tags */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
+          <Card className="border shadow-sm">
+            <CardContent className="p-4 space-y-3">
               <label className="text-sm font-medium">Tags</label>
 
               {/* Selected tags */}

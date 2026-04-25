@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar";
 import ChatBubble from "@/components/chat-bubble";
+import PageTracker from "@/components/page-tracker";
 
 export default function LayoutWrapper({
   children,
@@ -26,6 +27,7 @@ export default function LayoutWrapper({
       {children}
       <Navbar />
       <ChatBubble />
+      <PageTracker />
     </div>
   );
 }

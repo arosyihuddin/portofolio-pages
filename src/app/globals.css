@@ -222,3 +222,18 @@ code[data-line-numbers-max-digits="3"] > [data-line]::before {
 /* Compact prose for chat bubble widget */
 .chat-prose.prose-xs p { margin-top: 0.15em; margin-bottom: 0.15em; }
 .chat-prose.prose-xs ul, .chat-prose.prose-xs ol { margin-top: 0.15em; margin-bottom: 0.15em; }
+
+/* Novel editor placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.5;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Make entire editor area clickable */
+.ProseMirror {
+  cursor: text;
+}

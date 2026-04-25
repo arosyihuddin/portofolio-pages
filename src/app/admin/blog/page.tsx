@@ -165,7 +165,7 @@ export default function AdminBlogList() {
       ) : (
         <div className="space-y-3">
           {filteredPosts.map((post) => (
-            <Card key={post.id} className="p-4">
+            <Card key={post.id} className="border shadow-sm p-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 {/* Post info */}
                 <div className="flex-1 min-w-0">

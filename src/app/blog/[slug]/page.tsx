@@ -10,7 +10,8 @@ import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Clock, Calendar, List } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Calendar } from "lucide-react";
+import TocSidebar from "@/components/toc-sidebar";
 
 export const revalidate = 60;
 
@@ -144,59 +145,12 @@ export default async function BlogPostPage({
           </div>
         </header>
 
-        {/* Table of Contents — mobile/tablet: inline above content */}
+        {/* Table of Contents — mobile: inline / desktop: fixed sidebar */}
         {headings.length > 2 && (
-          <nav className="mb-8 rounded-lg border bg-muted/30 p-4 xl:hidden">
-            <div className="flex items-center gap-2 mb-3">
-              <List className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm font-semibold">On this page</p>
-            </div>
-            <ul className="space-y-1">
-              {headings.map((heading) => (
-                <li key={heading.id}>
-                  <a
-                    href={`#${heading.id}`}
-                    className={`block text-sm text-muted-foreground hover:text-foreground transition-colors leading-relaxed ${
-                      heading.level === 2
-                        ? "pl-0"
-                        : heading.level === 3
-                          ? "pl-4"
-                          : ""
-                    }`}
-                  >
-                    {heading.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
-
-        {/* Table of Contents — desktop: fixed sidebar right of container */}
-        {headings.length > 2 && (
-          <nav
-            className="hidden xl:block fixed top-24 w-48 z-20"
-            style={{ left: "calc(50% + 384px + 2rem)" }}
-          >
-            <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <List className="h-4 w-4 text-muted-foreground" />
-              On this page
-            </p>
-            <ul className="space-y-1.5 border-l border-border pl-3">
-              {headings.map((heading) => (
-                <li key={heading.id}>
-                  <a
-                    href={`#${heading.id}`}
-                    className={`block text-xs text-muted-foreground hover:text-foreground transition-colors leading-relaxed ${
-                      heading.level === 3 ? "pl-3" : ""
-                    }`}
-                  >
-                    {heading.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <>
+            <TocSidebar headings={headings} variant="inline" />
+            <TocSidebar headings={headings} variant="sidebar" />
+          </>
         )}
 
         {/* Main content */}
