@@ -11,6 +11,10 @@ import { DATA } from "@/data/resume";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+function isExternal(href: string) {
+  return href.startsWith("http://") || href.startsWith("https://");
+}
+
 export default function Navbar() {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 mx-auto mb-4 flex origin-bottom h-full max-h-14">
@@ -20,15 +24,29 @@ export default function Navbar() {
           <DockIcon key={item.href}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon" }),
-                    "size-12"
-                  )}
-                >
-                  <item.icon className="size-4" />
-                </Link>
+                {isExternal(item.href) ? (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "icon" }),
+                      "size-12"
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                  </a>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "icon" }),
+                      "size-12"
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                  </Link>
+                )}
               </TooltipTrigger>
               <TooltipContent>
                 <p>{item.label}</p>

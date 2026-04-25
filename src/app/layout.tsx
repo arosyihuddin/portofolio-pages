@@ -1,4 +1,4 @@
-import Navbar from "@/components/navbar";
+import LayoutWrapper from "@/components/layout-wrapper";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DATA } from "@/data/resume";
@@ -60,14 +60,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased max-w-2xl mx-auto py-12 sm:py-24 px-6",
+          "min-h-screen bg-background font-sans antialiased",
           fontSans.variable
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider delayDuration={0}>
-            {children}
-            <Navbar />
+            <LayoutWrapper>{children}</LayoutWrapper>
           </TooltipProvider>
         </ThemeProvider>
       </body>

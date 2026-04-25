@@ -4,7 +4,6 @@ import {
   NotebookIcon,
   Code,
   NotebookPen,
-  BotMessageSquare,
 } from "lucide-react";
 
 export const DATA = {
@@ -35,10 +34,8 @@ export const DATA = {
   ],
   navbar: [
     { href: "/", icon: HomeIcon, label: "Home" },
-    // { href: "/blog", icon: NotebookIcon, label: "Blog" },
-    { href: "/projects", icon: Code, label: "Projects" },
-    // { href: "/notes", icon: NotebookPen, label: "Notes" },
-    { href: "/chat", icon: BotMessageSquare, label: "Assistant" },
+    { href: "/blog", icon: NotebookIcon, label: "Blog" },
+    { href: "https://rlabs.arosyihuddin.com/", icon: Code, label: "Projects" },
   ],
   contact: {
     email: "rosyihuddin.dev@gmail.com",
@@ -63,7 +60,7 @@ export const DATA = {
         url: "https://x.com/a_rosyihuddin",
         icon: Icons.x,
 
-        navbar: true,
+        navbar: false,
       },
       email: {
         name: "Send Email",
@@ -136,189 +133,7 @@ export const DATA = {
       end: "2024",
     },
   ],
-  projects: [
-    {
-      title: "Qwen-Cline",
-      href: "https://github.com/arosyihuddin/qwen-cline",
-      dates: "Mei 2026 - Present",
-      active: true,
-      description:
-        "**qwen-cline** is a **Dockerized API service** for Qwen AI models, designed for easy integration with multiple platforms. It provides an OpenAI-compatible API interface, supporting both chat generation and tool-calling workflows. Compatible with **Cline**, **n8n** (via Ollama node), and any client that uses the OpenAI API format.",
-      technologies: ["Python", "FastAPI", "Docker"],
-      links: [
-        {
-          type: "Github",
-          href: "https://github.com/arosyihuddin/qwen-cline",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/qwen-cline.jpeg",
-      video: "",
-    },
-    {
-      title: "Qwen-API",
-      href: "https://github.com/arosyihuddin/qwen-api",
-      dates: "Mei 2025 - Present",
-      active: true,
-      description:
-        "**qwen-api** is an **unofficial Python SDK** for interacting with Qwen AI models. It supports chat completions, streaming responses, asynchronous calls, and file uploads via Aliyun OSS with HMAC v4 authentication. Designed to be easily integrated into backend services and automation workflows.",
-      technologies: ["Python", "httpx", "OOP"],
-      links: [
-        {
-          type: "Github",
-          href: "https://github.com/arosyihuddin/qwen-api",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/qwen-api.jpeg",
-      video: "",
-    },
-    {
-      title: "Searxng-Wrapper",
-      href: "https://github.com/arosyihuddin/searxng-wrapper",
-      dates: "Mei 2026 - Present",
-      active: true,
-      description:
-        "**searxng-wrapper** is a **lightweight Python wrapper** for interacting with [SearXNG](https://docs.searxng.org/) — a powerful, privacy-respecting metasearch engine. It provides a simple interface for performing search queries and retrieving results in a structured format, making it easy to integrate SearXNG into Python scripts, backend services, or automation workflows.",
-      technologies: ["Python", "OOP"],
-      links: [
-        {
-          type: "Github",
-          href: "https://github.com/arosyihuddin/searxng-wrapper",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/searxng-wrapper.jpeg",
-      video: "",
-    },
-    {
-      title: "Legal NER",
-      href: "https://huggingface.co/spaces/arosyihuddin/gradio-LegalNER",
-      dates: "Mar 2024 - Jul 2024",
-      active: true,
-      description:
-        "This application implements BERT to automatically identify legal entities in Indonesian court decision documents. The system is designed to facilitate the extraction of entities such as names, institutions, and legal terms, which are important in the processing and analysis of legal documents.",
-      technologies: ["Python", "PyTorch", "Gradio", "BERT"],
-      links: [
-        {
-          type: "Website",
-          href: "https://huggingface.co/spaces/arosyihuddin/gradio-LegalNER",
-          icon: <Icons.globe className="size-3" />,
-        },
-      ],
-      image: "/legalNER.png",
-      video: "",
-    },
-    {
-      title: "Tani Tama Capstone Project",
-      href: "https://github.com/Bangkit-Capstone-C23-PC639",
-      dates: "Mei 2023 - Jul 2023",
-      active: true,
-      description:
-        "In the Bangkit program, I developed a Convolutional Neural Networks (CNN) based Machine Learning model for the C23-PC369 project. My responsibilities included designing and training the CNN model and creating API endpoints using Flask for integrating the model into applications. This experience enhanced my skills in Machine Learning and web-based system development.",
-      technologies: [
-        "Python",
-        "Tensorflow",
-        "Pandas",
-        "Numpy",
-        "Docker",
-        "Flask",
-      ],
-      links: [
-        {
-          type: "Github",
-          href: "https://github.com/Bangkit-Capstone-C23-PC639",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/tanitama.png",
-      video: "",
-    },
-    {
-      title: "Sentiment Analysis of Surabaya Zoo",
-      href: "https://github.com/arosyihuddin/sentimen-analisis-kebun-binatang-surabaya",
-      dates: "Mei 2023",
-      active: true,
-      description:
-        "This project is a college assignment from my friend, I was told to help make it so I helped make the code only without implementing it into the website. this project is entitled sentiment analysis of Surabaya zoo reviews using Support Vector Machine (SVM). the dataset used itself from Google Maps reviews, the data is taken by crawling.",
-      technologies: ["Numpy", "Pandas", "Matplotlib", "Python", "Scikit-Learn"],
-      links: [
-        {
-          type: "Github",
-          href: "https://github.com/arosyihuddin/sentimen-analisis-kebun-binatang-surabaya",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/sentimen analisis.png",
-      video: "",
-    },
-    {
-      title: "Record Keeping System of Savings and Loan Cooperative",
-      href: "https://github.com/arosyihuddin/Koperasi-Simpan-Pinjam",
-      dates: "March 2023",
-      active: true,
-      description:
-        "This project is a request from my brother who works at a savings and loan cooperative in my home area. the system in this project can create letters by simply inputting the data through the form so that the letter is ready to print. the creation itself uses PHP version 8 and Laravel Version 9.",
-      technologies: ["Laravel", "Mysql", "Bootstrap", "JQuery"],
-      links: [
-        {
-          type: "Github",
-          href: "https://github.com/arosyihuddin/Koperasi-Simpan-Pinjam",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/koperasi.png",
-      video: "",
-    },
-    {
-      title: "Price Range Classification Based on Mobile Phone Specifications",
-      href: "https://datamining-uas.streamlit.app/",
-      dates: "Des 2022",
-      active: true,
-      description:
-        "This project is the final project of the Datamining course with the title Classification of Price Ranges Based on Mobile Phone Specifications using 3 methods namely KNN, Decission Tree, and Naive Bayes. and implemented using the Streamlit library.",
-      technologies: [
-        "Streamlit",
-        "Numpy",
-        "Pandas",
-        "Matplotlib",
-        "Python",
-        "Scikit-Learn",
-      ],
-      links: [
-        {
-          type: "Website",
-          href: "https://datamining-uas.streamlit.app/",
-          icon: <Icons.globe className="size-3" />,
-        },
-        {
-          type: "Github",
-          href: "https://github.com/arosyihuddin/streamlit-datamining",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/datamining.png",
-      video: "",
-    },
-    {
-      title: "Super Banana",
-      href: "https://github.com/arosyihuddin/Super-Pisang",
-      dates: "March 2020",
-      active: true,
-      description:
-        "Super Banana is a final project of the Software Project course, this project is done in groups of 4 people. This project raises the problem of a krispi banana seller who is very in demand so that many of the consumers have to queue very long resulting in consumers being bored waiting for it. therefore a krispi banana purchasing system was made called super banana, with this system consumers can buy krispi bananas from their boarding house without having to be bored waiting for orders. making this system using PHP version 8 and also laravel version 9.",
-      technologies: ["Laravel", "Mysql", "Bootstrap", "JQuery"],
-      links: [
-        {
-          type: "Github",
-          href: "https://github.com/arosyihuddin/Super-Pisang",
-          icon: <Icons.github className="size-3" />,
-        },
-      ],
-      image: "/super pisang.png",
-      video: "",
-    },
-  ],
+  projectsUrl: "https://rlabs.arosyihuddin.com/",
   notes: [
     {
       title: "Thesis",

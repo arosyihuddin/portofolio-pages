@@ -1,50 +1,55 @@
-import BlurFade from "@/components/magicui/blur-fade";
-import { getBlogPosts } from "@/data/blog";
-import Link from "next/link";
+import { getBlogPosts, getAllTags, getReadingTime } from "@/data/blog";
+import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
+import Link from "next/link";
+import BlurFade from "@/components/magicui/blur-fade";
+import BlogListClient from "./blog-list-client";
 
 export const metadata: Metadata = {
   title: "Blog",
-  description: "My thoughts on software development, life, and more.",
+  description: "Thoughts on software development, AI, and more.",
   alternates: {
     canonical: "/blog",
   },
 };
 
-const BLUR_FADE_DELAY = 0.04;
+export const revalidate = 60; // ISR: revalidate every 60 seconds
 
 export default async function BlogPage() {
-  const posts = await getBlogPosts();
+  const [posts, tags] = await Promise.all([getBlogPosts(), getAllTags()]);
+
+  const postsWithReadingTime = posts.map((post) => ({
+    ...post,
+    readingTime: getReadingTime(post.content),
+  }));
 
   return (
-    <section>
-      <BlurFade delay={BLUR_FADE_DELAY}>
-        <h1 className="font-medium text-2xl mb-8 tracking-tighter">blog</h1>
-      </BlurFade>
-      {posts
-        .sort((a, b) => {
-          if (
-            new Date(a.metadata.publishedAt) > new Date(b.metadata.publishedAt)
-          ) {
-            return -1;
-          }
-          return 1;
-        })
-        .map((post, id) => (
-          <BlurFade delay={BLUR_FADE_DELAY * 2 + id * 0.05} key={post.slug}>
-            <Link
-              className="flex flex-col space-y-1 mb-4"
-              href={`/blog/${post.slug}`}
-            >
-              <div className="w-full flex flex-col">
-                <p className="tracking-tight">{post.metadata.title}</p>
-                <p className="h-6 text-xs text-muted-foreground">
-                  {post.metadata.publishedAt}
-                </p>
+    <main className="flex flex-col min-h-[100dvh] pb-28">
+      <section className="w-full py-8 pt-2 space-y-8">
+        <BlurFade delay={0.04}>
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <div className="inline-block rounded-lg bg-foreground text-background px-3 py-1 text-sm">
+                Blog
               </div>
-            </Link>
-          </BlurFade>
-        ))}
-    </section>
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">
+                Articles & Thoughts
+              </h1>
+              <p className="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed max-w-lg mx-auto">
+                Writing about software engineering, machine learning, and things
+                I learn along the way.
+              </p>
+            </div>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.08}>
+          <BlogListClient
+            posts={postsWithReadingTime}
+            tags={tags}
+          />
+        </BlurFade>
+      </section>
+    </main>
   );
 }

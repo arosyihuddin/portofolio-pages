@@ -3,6 +3,29 @@ import { GlobeIcon, MailIcon } from "lucide-react";
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
+  ar: (props: IconProps) => (
+    <svg
+      viewBox="0 0 40 40"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      {...props}
+    >
+      <rect width="40" height="40" rx="10" fill="currentColor" />
+      <text
+        x="50%"
+        y="50%"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif"
+        fontWeight="700"
+        fontSize="16"
+        letterSpacing="0.5"
+        fill="white"
+      >
+        AR
+      </text>
+    </svg>
+  ),
   globe: (props: IconProps) => <GlobeIcon {...props} />,
   email: (props: IconProps) => <MailIcon {...props} />,
   linkedin: (props: IconProps) => (
