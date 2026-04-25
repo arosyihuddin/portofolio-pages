@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Clock, Calendar, Tag } from "lucide-react";
+import { Search, Clock, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { BlogPost, BlogTag } from "@/data/blog";
 

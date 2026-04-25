@@ -1,7 +1,5 @@
 import { getBlogPosts, getAllTags, getReadingTime } from "@/data/blog";
-import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
-import Link from "next/link";
 import BlurFade from "@/components/magicui/blur-fade";
 import BlogListClient from "./blog-list-client";
 

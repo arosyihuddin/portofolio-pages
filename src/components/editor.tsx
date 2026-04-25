@@ -322,8 +322,6 @@ export default function NovelEditor({
   onChange,
   onHtmlChange,
 }: EditorProps) {
-  const [openNode, setOpenNode] = useState(false);
-
   return (
     <EditorRoot>
       <EditorContent

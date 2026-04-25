@@ -22,7 +22,6 @@ import { toast } from "sonner";
 import GenerateDialog, {
   type GeneratedContent,
 } from "@/components/generate-dialog";
-import type { JSONContent } from "novel";
 
 const NovelEditor = dynamic(() => import("@/components/editor"), {
   ssr: false,
@@ -58,7 +57,6 @@ export default function EditBlogPost() {
   const [slug, setSlug] = useState("");
   const [summary, setSummary] = useState("");
   const [coverImage, setCoverImage] = useState("");
-  const [content, setContent] = useState<JSONContent>({});
   const [htmlContent, setHtmlContent] = useState("");
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -338,7 +336,7 @@ export default function EditBlogPost() {
           {initialHtml !== null && (
             <NovelEditor
               key={editorKey}
-              onChange={setContent}
+              onChange={() => {}}
               onHtmlChange={setHtmlContent}
               initialHtml={initialHtml || ""}
             />

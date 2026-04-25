@@ -18,7 +18,6 @@ import {
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
-import type { JSONContent } from "novel";
 import GenerateDialog, {
   type GeneratedContent,
 } from "@/components/generate-dialog";
@@ -55,7 +54,6 @@ export default function NewBlogPost() {
   const [slug, setSlug] = useState("");
   const [summary, setSummary] = useState("");
   const [coverImage, setCoverImage] = useState("");
-  const [content, setContent] = useState<JSONContent>({});
   const [htmlContent, setHtmlContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -294,7 +292,7 @@ export default function NewBlogPost() {
           <NovelEditor
             key={editorKey}
             initialHtml={htmlContent || undefined}
-            onChange={setContent}
+            onChange={() => {}}
             onHtmlChange={setHtmlContent}
           />
         </div>

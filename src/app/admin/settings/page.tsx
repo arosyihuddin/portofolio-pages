@@ -29,7 +29,6 @@ import {
   ChevronRight,
   MessageCircle,
   Sparkles,
-  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
