@@ -165,8 +165,15 @@ function ChatBubbleInner({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const { messages, sendMessage, setMessages, status } = useChat({
     messages: initialMessages.length > 0 ? initialMessages : undefined,
+    onError: () => {
+      setErrorMessage(
+        "Terjadi kesalahan saat menghubungi asisten. Coba lagi sebentar.",
+      );
+    },
   });
 
   const isLoading = status === "streaming" || status === "submitted";
@@ -196,6 +203,10 @@ function ChatBubbleInner({
   }, [messages, open, scrollToBottom]);
 
   useEffect(() => {
+    if (errorMessage && open) scrollToBottom();
+  }, [errorMessage, open, scrollToBottom]);
+
+  useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 200);
   }, [open]);
 
@@ -213,12 +224,14 @@ function ChatBubbleInner({
   const clearChat = () => {
     setMessages([]);
     setInput("");
+    setErrorMessage(null);
     localStorage.removeItem(STORAGE_KEY);
   };
 
   const handleSend = (text?: string) => {
     const msg = text || input;
     if (!msg.trim() || isLoading) return;
+    setErrorMessage(null);
     sendMessage({ text: msg.trim() });
     setInput("");
     if (inputRef.current) inputRef.current.style.height = "auto";
@@ -422,6 +435,29 @@ function ChatBubbleInner({
                         <div className="dot"></div>
                         <div className="dot"></div>
                         <div className="dot"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error bubble */}
+                {errorMessage && status !== "streaming" && (
+                  <div className="flex gap-2 animate-chat-fade-in-up">
+                    <div className="shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-red-500/15 text-red-600 dark:text-red-400">
+                        <Bot className="h-3 w-3" />
+                      </div>
+                    </div>
+                    <div className="max-w-[calc(100%-2rem)]">
+                      <div className="px-3 py-2 rounded-2xl rounded-bl-md text-xs leading-relaxed break-words bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-200 dark:border-red-900/60">
+                        <p className="font-medium mb-0.5">Terjadi kesalahan</p>
+                        <p className="opacity-90">{errorMessage}</p>
+                        <button
+                          onClick={() => setErrorMessage(null)}
+                          className="mt-1.5 text-[10px] underline opacity-80 hover:opacity-100"
+                        >
+                          Tutup
+                        </button>
                       </div>
                     </div>
                   </div>

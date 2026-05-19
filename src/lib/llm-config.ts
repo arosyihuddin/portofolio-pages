@@ -74,8 +74,7 @@ export async function getLLMConfig(
 
   const providerId =
     purpose === "chat" ? config.chat_provider_id : config.generate_provider_id;
-  const model =
-    purpose === "chat" ? config.chat_model : config.generate_model;
+  const model = purpose === "chat" ? config.chat_model : config.generate_model;
 
   if (!providerId || !model) {
     throw new Error(
