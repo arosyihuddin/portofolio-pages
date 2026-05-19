@@ -55,6 +55,170 @@ function normalizeBaseUrl(baseUrl: string): string {
   }
 }
 
+function createOpenAICompatibleFetch() {
+  const decoder = new TextDecoder();
+
+  return async (input: RequestInfo | URL, init?: RequestInit) => {
+    let wantsStream = false;
+    try {
+      const rawBody = init?.body;
+      if (typeof rawBody === "string" && rawBody.length) {
+        const parsedBody = JSON.parse(rawBody);
+        wantsStream = parsedBody?.stream === true;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const response = await fetch(input, init);
+    const contentType = response.headers.get("content-type") || "";
+
+    if (
+      wantsStream ||
+      !response.body ||
+      !contentType.includes("text/event-stream")
+    ) {
+      return response;
+    }
+
+    const reader = response.body.getReader();
+    let buffer = "";
+    let aggregatedContent = "";
+    let aggregatedRole: string | undefined;
+    let finishReason: string | null = null;
+    let usage: unknown;
+    let id = `chatcmpl-${Date.now()}`;
+    let model = "llm";
+    let created = Math.floor(Date.now() / 1000);
+    type ToolCallAcc = {
+      id?: string;
+      type?: string;
+      function: { name?: string; arguments: string };
+    };
+    const toolCalls = new Map<number, ToolCallAcc>();
+
+    const handleData = (data: string) => {
+      if (!data || data === "[DONE]") return;
+      let parsed: any;
+      try {
+        parsed = JSON.parse(data);
+      } catch {
+        return;
+      }
+
+      if (parsed?.id) id = parsed.id;
+      if (parsed?.model) model = parsed.model;
+      if (parsed?.created) created = parsed.created;
+      if (parsed?.usage) usage = parsed.usage;
+
+      // OpenAI-compatible chunk
+      const choice = parsed?.choices?.[0];
+      if (choice) {
+        const delta = choice.delta || {};
+        if (delta.role) aggregatedRole = delta.role;
+        if (typeof delta.content === "string") {
+          aggregatedContent += delta.content;
+        }
+        if (Array.isArray(delta.tool_calls)) {
+          for (const tc of delta.tool_calls) {
+            const idx = typeof tc.index === "number" ? tc.index : 0;
+            const acc = toolCalls.get(idx) || { function: { arguments: "" } };
+            if (tc.id) acc.id = tc.id;
+            if (tc.type) acc.type = tc.type;
+            if (tc.function?.name) acc.function.name = tc.function.name;
+            if (typeof tc.function?.arguments === "string") {
+              acc.function.arguments += tc.function.arguments;
+            }
+            toolCalls.set(idx, acc);
+          }
+        }
+        if (choice.finish_reason) finishReason = choice.finish_reason;
+        return;
+      }
+
+      // Anthropic-style text delta
+      if (
+        parsed?.type === "content_block_delta" &&
+        parsed?.delta?.type === "text_delta" &&
+        typeof parsed?.delta?.text === "string"
+      ) {
+        aggregatedContent += parsed.delta.text;
+      }
+    };
+
+    const handleEvent = (rawEvent: string) => {
+      const trimmed = rawEvent.trim();
+      if (!trimmed) return;
+      const dataLines = trimmed
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart());
+      if (!dataLines.length) return;
+      handleData(dataLines.join("\n"));
+    };
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let separatorIndex: number;
+        while ((separatorIndex = buffer.indexOf("\n\n")) !== -1) {
+          const event = buffer.slice(0, separatorIndex);
+          buffer = buffer.slice(separatorIndex + 2);
+          handleEvent(event);
+        }
+      }
+      if (buffer.trim()) handleEvent(buffer);
+    } finally {
+      reader.releaseLock();
+    }
+
+    const message: Record<string, unknown> = {
+      role: aggregatedRole || "assistant",
+      content: aggregatedContent || null,
+    };
+    if (toolCalls.size > 0) {
+      message.tool_calls = Array.from(toolCalls.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([, tc]) => ({
+          id: tc.id,
+          type: tc.type || "function",
+          function: {
+            name: tc.function.name,
+            arguments: tc.function.arguments,
+          },
+        }));
+    }
+
+    const aggregated = {
+      id,
+      object: "chat.completion",
+      created,
+      model,
+      choices: [
+        {
+          index: 0,
+          message,
+          finish_reason: finishReason || "stop",
+        },
+      ],
+      usage,
+    };
+
+    const headers = new Headers(response.headers);
+    headers.set("content-type", "application/json");
+    headers.delete("content-length");
+    headers.delete("transfer-encoding");
+
+    return new Response(JSON.stringify(aggregated), {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  };
+}
+
 export async function getLLMConfig(
   purpose: "chat" | "generate",
 ): Promise<LLMConfig> {
@@ -129,6 +293,7 @@ export async function createLLMProvider(purpose: "chat" | "generate") {
     name: "llm",
     baseURL: config.baseUrl,
     headers,
+    fetch: createOpenAICompatibleFetch(),
   });
 
   return { provider, model: config.model };
