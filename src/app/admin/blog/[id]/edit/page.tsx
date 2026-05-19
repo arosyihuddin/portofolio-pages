@@ -22,6 +22,11 @@ import { toast } from "sonner";
 import GenerateDialog, {
   type GeneratedContent,
 } from "@/components/generate-dialog";
+import {
+  extractStorageKeysFromHtml,
+  urlToStorageKey,
+  diffRemovedKeys,
+} from "@/lib/blog-images";
 
 const NovelEditor = dynamic(() => import("@/components/editor"), {
   ssr: false,
@@ -68,6 +73,11 @@ export default function EditBlogPost() {
   // We store the initial HTML to pass to the editor
   const [initialHtml, setInitialHtml] = useState<string | null>(null);
 
+  // Snapshot of image keys + cover key when the post was first loaded so we
+  // can diff and clean up storage on save.
+  const [originalContentKeys, setOriginalContentKeys] = useState<string[]>([]);
+  const [originalCoverKey, setOriginalCoverKey] = useState<string | null>(null);
+
   // Tags
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -96,6 +106,8 @@ export default function EditBlogPost() {
       setHtmlContent(post.content || "");
       setInitialHtml(post.content || "");
       setPublished(post.published);
+      setOriginalContentKeys(extractStorageKeysFromHtml(post.content));
+      setOriginalCoverKey(urlToStorageKey(post.cover_image));
 
       if (tagsRes.data) setAllTags(tagsRes.data);
       if (postTagsRes.data) {
@@ -218,6 +230,31 @@ export default function EditBlogPost() {
         }));
         await supabase.from("blog_post_tags").insert(tagRelations);
       }
+
+      // Clean up images that were removed from the editor or cover slot.
+      const newContentKeys = extractStorageKeysFromHtml(htmlContent);
+      const newCoverKey = urlToStorageKey(coverImage);
+      const removed = diffRemovedKeys(originalContentKeys, newContentKeys);
+      if (originalCoverKey && originalCoverKey !== newCoverKey) {
+        // Only delete the old cover if it isn't still referenced inside the
+        // article body.
+        if (!newContentKeys.includes(originalCoverKey)) {
+          removed.push(originalCoverKey);
+        }
+      }
+      if (removed.length > 0) {
+        try {
+          await fetch("/api/upload/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paths: removed }),
+          });
+        } catch (err) {
+          console.error("Failed to clean up unused images:", err);
+        }
+      }
+      setOriginalContentKeys(newContentKeys);
+      setOriginalCoverKey(newCoverKey);
 
       setPublished(newPublished);
       toast.success("Post saved!");

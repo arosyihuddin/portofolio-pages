@@ -27,6 +27,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import {
+  extractStorageKeysFromHtml,
+  urlToStorageKey,
+} from "@/lib/blog-images";
 
 interface BlogPost {
   id: string;
@@ -81,6 +85,13 @@ export default function AdminBlogList() {
     setDeleting(id);
     setDeleteTarget(null);
 
+    // Collect images so we can clean up storage after the post is deleted.
+    const { data: postData } = await supabase
+      .from("blog_posts")
+      .select("content, cover_image")
+      .eq("id", id)
+      .single();
+
     // Delete post-tag relations first
     await supabase.from("blog_post_tags").delete().eq("post_id", id);
     await supabase.from("page_views").delete().eq("path", `/blog/${slug}`);
@@ -91,6 +102,27 @@ export default function AdminBlogList() {
     } else {
       toast.success("Post deleted");
       setPosts((prev) => prev.filter((p) => p.id !== id));
+
+      // Best-effort cleanup of orphaned images.
+      const keys = new Set<string>();
+      if (postData) {
+        extractStorageKeysFromHtml(postData.content).forEach((k) =>
+          keys.add(k),
+        );
+        const coverKey = urlToStorageKey(postData.cover_image);
+        if (coverKey) keys.add(coverKey);
+      }
+      if (keys.size > 0) {
+        try {
+          await fetch("/api/upload/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paths: Array.from(keys) }),
+          });
+        } catch (err) {
+          console.error("Failed to clean up post images:", err);
+        }
+      }
     }
     setDeleting(null);
   };
