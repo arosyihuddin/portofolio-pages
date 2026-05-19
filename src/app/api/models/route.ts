@@ -1,10 +1,32 @@
 import { NextResponse } from "next/server";
 
+function normalizeBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+
+  try {
+    const url = new URL(trimmed);
+    const isLocal =
+      url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "::1";
+
+    if (url.protocol === "http:" && !isLocal) {
+      url.protocol = "https:";
+    }
+
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    return trimmed;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { baseUrl, apiKey, customHeaders } = await req.json();
+    const trimmedBaseUrl = baseUrl ? normalizeBaseUrl(baseUrl) : "";
+    const trimmedApiKey = apiKey?.trim();
 
-    if (!baseUrl || !apiKey) {
+    if (!trimmedBaseUrl || !trimmedApiKey) {
       return NextResponse.json(
         { error: "Base URL and API Key are required" },
         { status: 400 },
@@ -12,11 +34,25 @@ export async function POST(req: Request) {
     }
 
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${apiKey}`,
-      ...(customHeaders || {}),
+      Authorization: `Bearer ${trimmedApiKey}`,
     };
 
-    const response = await fetch(`${baseUrl}/models`, { headers });
+    Object.entries(customHeaders || {}).forEach(([key, value]) => {
+      const headerName = key.trim();
+      const headerValue = typeof value === "string" ? value.trim() : "";
+
+      if (
+        !headerName ||
+        !headerValue ||
+        headerName.toLowerCase() === "authorization"
+      ) {
+        return;
+      }
+
+      headers[headerName] = headerValue;
+    });
+
+    const response = await fetch(`${trimmedBaseUrl}/models`, { headers });
 
     if (!response.ok) {
       const errorText = await response.text();

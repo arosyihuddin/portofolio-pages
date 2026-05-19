@@ -13,6 +13,48 @@ export interface LLMConfig {
   customHeaders: Record<string, string>;
 }
 
+function normalizeHeaders(
+  headers: Record<string, unknown> | null | undefined,
+  hasApiKey: boolean,
+): Record<string, string> {
+  const normalized: Record<string, string> = {};
+
+  Object.entries(headers || {}).forEach(([key, value]) => {
+    const headerName = key.trim();
+    const headerValue = typeof value === "string" ? value.trim() : "";
+
+    if (!headerName || !headerValue) return;
+
+    // createOpenAICompatible builds Authorization from apiKey. A custom
+    // Authorization header would override it because package headers win.
+    if (hasApiKey && headerName.toLowerCase() === "authorization") return;
+
+    normalized[headerName] = headerValue;
+  });
+
+  return normalized;
+}
+
+function normalizeBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+
+  try {
+    const url = new URL(trimmed);
+    const isLocal =
+      url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "::1";
+
+    if (url.protocol === "http:" && !isLocal) {
+      url.protocol = "https:";
+    }
+
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    return trimmed;
+  }
+}
+
 export async function getLLMConfig(
   purpose: "chat" | "generate",
 ): Promise<LLMConfig> {
@@ -53,11 +95,23 @@ export async function getLLMConfig(
     );
   }
 
+  const baseUrl = provider.base_url ? normalizeBaseUrl(provider.base_url) : "";
+  const apiKey = provider.api_key?.trim();
+
+  if (!baseUrl || !apiKey) {
+    throw new Error(
+      "LLM provider is missing Base URL or API Key. Please check Admin > LLM Settings.",
+    );
+  }
+
   return {
-    baseUrl: provider.base_url,
+    baseUrl,
     model,
-    apiKey: provider.api_key,
-    customHeaders: (provider.custom_headers as Record<string, string>) || {},
+    apiKey,
+    customHeaders: normalizeHeaders(
+      provider.custom_headers as Record<string, unknown>,
+      Boolean(apiKey),
+    ),
   };
 }
 
@@ -67,12 +121,15 @@ export async function getLLMConfig(
  */
 export async function createLLMProvider(purpose: "chat" | "generate") {
   const config = await getLLMConfig(purpose);
+  const headers = {
+    ...config.customHeaders,
+    Authorization: `Bearer ${config.apiKey}`,
+  };
 
   const provider = createOpenAICompatible({
     name: "llm",
     baseURL: config.baseUrl,
-    apiKey: config.apiKey,
-    headers: config.customHeaders,
+    headers,
   });
 
   return { provider, model: config.model };

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -29,6 +30,9 @@ import {
   ChevronRight,
   MessageCircle,
   Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,6 +60,38 @@ interface HeaderRow {
   value: string;
 }
 
+function normalizeBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+
+  try {
+    const url = new URL(trimmed);
+    const isLocal =
+      url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "::1";
+
+    if (url.protocol === "http:" && !isLocal) {
+      url.protocol = "https:";
+    }
+
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    return trimmed;
+  }
+}
+
+function headersToObject(headers: HeaderRow[]): Record<string, string> {
+  const headersObj: Record<string, string> = {};
+
+  headers.forEach((h) => {
+    const key = h.key.trim();
+    const value = h.value.trim();
+    if (key && value) headersObj[key] = value;
+  });
+
+  return headersObj;
+}
+
 export default function AdminSettingsPage() {
   const supabase = createClient();
 
@@ -67,12 +103,17 @@ export default function AdminSettingsPage() {
   const [savingProvider, setSavingProvider] = useState<string | null>(null);
   const [fetchingModels, setFetchingModels] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Provider | null>(null);
+  const [activeTab, setActiveTab] = useState<"config" | "providers">("config");
 
   // Active config form
   const [chatProviderId, setChatProviderId] = useState("");
   const [chatModel, setChatModel] = useState("");
+  const [chatModelOpen, setChatModelOpen] = useState(false);
+  const [chatModelActiveIndex, setChatModelActiveIndex] = useState(0);
   const [generateProviderId, setGenerateProviderId] = useState("");
   const [generateModel, setGenerateModel] = useState("");
+  const [generateModelOpen, setGenerateModelOpen] = useState(false);
+  const [generateModelActiveIndex, setGenerateModelActiveIndex] = useState(0);
 
   // Add provider form
   const [adding, setAdding] = useState(false);
@@ -82,6 +123,10 @@ export default function AdminSettingsPage() {
     api_key: "",
     custom_headers: [] as HeaderRow[],
   });
+  const [testingNewProvider, setTestingNewProvider] = useState(false);
+  const [newProviderModels, setNewProviderModels] = useState<string[]>([]);
+  const [newProviderValidated, setNewProviderValidated] = useState(false);
+  const [newProviderFingerprint, setNewProviderFingerprint] = useState("");
 
   // Edit provider state
   const [editData, setEditData] = useState<
@@ -136,6 +181,121 @@ export default function AdminSettingsPage() {
   const getProviderModels = (providerId: string): string[] => {
     const provider = providers.find((p) => p.id === providerId);
     return provider?.models || [];
+  };
+
+  const getFilteredModels = (providerId: string, query: string): string[] => {
+    const normalizedQuery = query.trim().toLowerCase();
+    const models = getProviderModels(providerId);
+
+    if (!normalizedQuery) return models;
+
+    return models.filter((model) =>
+      model.toLowerCase().includes(normalizedQuery),
+    );
+  };
+
+  const chatFilteredModels = getFilteredModels(chatProviderId, chatModel);
+  const generateFilteredModels = getFilteredModels(
+    generateProviderId,
+    generateModel,
+  );
+
+  useEffect(() => {
+    if (!chatModelOpen) return;
+
+    document
+      .getElementById(`chat-model-option-${chatModelActiveIndex}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [chatModelActiveIndex, chatModelOpen, chatFilteredModels.length]);
+
+  useEffect(() => {
+    if (!generateModelOpen) return;
+
+    document
+      .getElementById(`generate-model-option-${generateModelActiveIndex}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [
+    generateModelActiveIndex,
+    generateModelOpen,
+    generateFilteredModels.length,
+  ]);
+
+  const getNewProviderFingerprint = () => {
+    const baseUrl = normalizeBaseUrl(newProvider.base_url);
+    const apiKey = newProvider.api_key.trim();
+    const headers = headersToObject(newProvider.custom_headers);
+
+    return JSON.stringify({ baseUrl, apiKey, headers });
+  };
+
+  const isNewProviderValidated =
+    newProviderValidated &&
+    newProviderModels.length > 0 &&
+    newProviderFingerprint === getNewProviderFingerprint();
+
+  const resetNewProviderValidation = () => {
+    setNewProviderValidated(false);
+    setNewProviderModels([]);
+    setNewProviderFingerprint("");
+  };
+
+  const resetNewProviderForm = () => {
+    setNewProvider({
+      name: "",
+      base_url: "",
+      api_key: "",
+      custom_headers: [],
+    });
+    resetNewProviderValidation();
+  };
+
+  const copyModels = async (models: string[]) => {
+    if (!models.length) return;
+    const text = models.join("\n");
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      toast.success(`Copied ${models.length} models`);
+    } catch {
+      toast.error("Failed to copy models");
+    }
+  };
+
+  const copyModel = async (model: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(model);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = model;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      toast.success("Model copied");
+    } catch {
+      toast.error("Failed to copy model");
+    }
   };
 
   // Save active config
@@ -211,19 +371,25 @@ export default function AdminSettingsPage() {
     const data = editData[id];
     if (!data) return;
 
+    const name = data.name.trim();
+    const baseUrl = normalizeBaseUrl(data.base_url);
+    const apiKey = data.api_key.trim();
+
+    if (!name || !baseUrl || !apiKey) {
+      toast.error("Name, Base URL, and API Key are required");
+      return;
+    }
+
     setSavingProvider(id);
 
-    const headersObj: Record<string, string> = {};
-    data.custom_headers.forEach((h) => {
-      if (h.key.trim()) headersObj[h.key.trim()] = h.value;
-    });
+    const headersObj = headersToObject(data.custom_headers);
 
     const { error } = await supabase
       .from("llm_providers")
       .update({
-        name: data.name,
-        base_url: data.base_url,
-        api_key: data.api_key,
+        name,
+        base_url: baseUrl,
+        api_key: apiKey,
         custom_headers: headersObj,
       })
       .eq("id", id);
@@ -237,9 +403,9 @@ export default function AdminSettingsPage() {
           p.id === id
             ? {
                 ...p,
-                name: data.name,
-                base_url: data.base_url,
-                api_key: data.api_key,
+                name,
+                base_url: baseUrl,
+                api_key: apiKey,
                 custom_headers: headersObj,
               }
             : p,
@@ -255,7 +421,7 @@ export default function AdminSettingsPage() {
 
     try {
       const edit = editData[provider.id];
-      const baseUrl = edit?.base_url || provider.base_url;
+      const baseUrl = normalizeBaseUrl(edit?.base_url || provider.base_url);
       const apiKey = edit?.api_key || provider.api_key;
       const headers = edit
         ? Object.fromEntries(
@@ -303,28 +469,83 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleTestNewProvider = async () => {
+    const name = newProvider.name.trim();
+    const baseUrl = normalizeBaseUrl(newProvider.base_url);
+    const apiKey = newProvider.api_key.trim();
+
+    if (!name || !baseUrl || !apiKey) {
+      toast.error("Name, Base URL, and API Key are required");
+      return;
+    }
+
+    setTestingNewProvider(true);
+    resetNewProviderValidation();
+
+    try {
+      const headers = headersToObject(newProvider.custom_headers);
+      const fingerprint = JSON.stringify({ baseUrl, apiKey, headers });
+
+      const res = await fetch("/api/models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseUrl, apiKey, customHeaders: headers }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Provider validation failed");
+        return;
+      }
+
+      const models = data.models || [];
+
+      if (!models.length) {
+        toast.error("Provider is valid, but no models were returned");
+        return;
+      }
+
+      setNewProviderModels(models);
+      setNewProviderValidated(true);
+      setNewProviderFingerprint(fingerprint);
+      toast.success(`Provider valid. Found ${models.length} models`);
+    } catch {
+      toast.error("Provider validation failed");
+    } finally {
+      setTestingNewProvider(false);
+    }
+  };
+
   // Add provider
   const handleAddProvider = async () => {
-    if (!newProvider.name.trim() || !newProvider.base_url.trim()) {
-      toast.error("Name and Base URL are required");
+    const name = newProvider.name.trim();
+    const baseUrl = normalizeBaseUrl(newProvider.base_url);
+    const apiKey = newProvider.api_key.trim();
+
+    if (!name || !baseUrl || !apiKey) {
+      toast.error("Name, Base URL, and API Key are required");
+      return;
+    }
+
+    if (!isNewProviderValidated) {
+      toast.error("Fetch models first to validate this provider");
       return;
     }
 
     setSavingProvider("new");
 
-    const headersObj: Record<string, string> = {};
-    newProvider.custom_headers.forEach((h) => {
-      if (h.key.trim()) headersObj[h.key.trim()] = h.value;
-    });
+    const headersObj = headersToObject(newProvider.custom_headers);
 
     const { data, error } = await supabase
       .from("llm_providers")
       .insert({
-        name: newProvider.name.trim(),
-        base_url: newProvider.base_url.trim(),
-        api_key: newProvider.api_key.trim(),
+        name,
+        base_url: baseUrl,
+        api_key: apiKey,
         custom_headers: headersObj,
-        models: [],
+        models: newProviderModels,
+        models_fetched_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -336,9 +557,13 @@ export default function AdminSettingsPage() {
       toast.success("Provider added");
       setProviders((prev) => [
         ...prev,
-        { ...data, models: [], custom_headers: data.custom_headers || headersObj },
+        {
+          ...data,
+          models: Array.isArray(data.models) ? data.models : newProviderModels,
+          custom_headers: data.custom_headers || headersObj,
+        },
       ]);
-      setNewProvider({ name: "", base_url: "", api_key: "", custom_headers: [] });
+      resetNewProviderForm();
       setAdding(false);
     }
     setSavingProvider(null);
@@ -391,7 +616,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl">
+    <div className="w-full space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">LLM Settings</h1>
@@ -401,7 +626,29 @@ export default function AdminSettingsPage() {
         </p>
       </div>
 
+      <div className="inline-flex rounded-md border bg-muted/30 p-1">
+        <Button
+          variant={activeTab === "config" ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setActiveTab("config")}
+          className="gap-1.5"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          AI Config
+        </Button>
+        <Button
+          variant={activeTab === "providers" ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setActiveTab("providers")}
+          className="gap-1.5"
+        >
+          <Server className="h-3.5 w-3.5" />
+          Providers
+        </Button>
+      </div>
+
       {/* Active Configuration */}
+      {activeTab === "config" && (
       <Card className="border shadow-sm">
         <CardHeader className="p-6 pb-4">
           <div className="flex items-center justify-between">
@@ -438,6 +685,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => {
                     setChatProviderId(e.target.value);
                     setChatModel("");
+                    setChatModelActiveIndex(0);
                   }}
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
@@ -451,19 +699,90 @@ export default function AdminSettingsPage() {
               </div>
               <div className="space-y-1">
                 <span className="text-xs text-muted-foreground">Model</span>
-                <select
-                  value={chatModel}
-                  onChange={(e) => setChatModel(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  disabled={!chatProviderId}
-                >
-                  <option value="">Select model...</option>
-                  {getProviderModels(chatProviderId).map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    value={chatModel}
+                    onChange={(e) => {
+                      setChatModel(e.target.value);
+                      setChatModelOpen(true);
+                      setChatModelActiveIndex(0);
+                    }}
+                    onFocus={() => setChatModelOpen(true)}
+                    onKeyDown={(e) => {
+                      if (!chatModelOpen && e.key === "ArrowDown") {
+                        setChatModelOpen(true);
+                        return;
+                      }
+
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setChatModelActiveIndex((index) =>
+                          Math.min(index + 1, chatFilteredModels.length - 1),
+                        );
+                      }
+
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setChatModelActiveIndex((index) =>
+                          Math.max(index - 1, 0),
+                        );
+                      }
+
+                      if (e.key === "Enter" && chatModelOpen) {
+                        const model = chatFilteredModels[chatModelActiveIndex];
+                        if (model) {
+                          e.preventDefault();
+                          setChatModel(model);
+                          setChatModelOpen(false);
+                        }
+                      }
+
+                      if (e.key === "Escape") {
+                        setChatModelOpen(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      window.setTimeout(() => setChatModelOpen(false), 120);
+                    }}
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!chatProviderId}
+                    placeholder="Search model..."
+                  />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  {chatModelOpen && chatProviderId && (
+                    <div className="hide-scrollbar absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                      {chatFilteredModels.length > 0 ? (
+                        chatFilteredModels.map(
+                          (model, index) => (
+                            <button
+                              key={model}
+                              id={`chat-model-option-${index}`}
+                              type="button"
+                              title={model}
+                              className={`block w-full truncate rounded px-2 py-1.5 text-left font-mono text-xs hover:bg-accent hover:text-accent-foreground ${
+                                index === chatModelActiveIndex
+                                  ? "bg-accent text-accent-foreground"
+                                  : ""
+                              }`}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setChatModel(model);
+                                setChatModelOpen(false);
+                              }}
+                              onMouseEnter={() => setChatModelActiveIndex(index)}
+                            >
+                              {model}
+                            </button>
+                          ),
+                        )
+                      ) : (
+                        <div className="px-2 py-2 text-xs text-muted-foreground">
+                          No matching models
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {chatProviderId &&
                   getProviderModels(chatProviderId).length === 0 && (
                     <p className="text-[10px] text-yellow-500">
@@ -488,6 +807,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => {
                     setGenerateProviderId(e.target.value);
                     setGenerateModel("");
+                    setGenerateModelActiveIndex(0);
                   }}
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
@@ -501,19 +821,94 @@ export default function AdminSettingsPage() {
               </div>
               <div className="space-y-1">
                 <span className="text-xs text-muted-foreground">Model</span>
-                <select
-                  value={generateModel}
-                  onChange={(e) => setGenerateModel(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  disabled={!generateProviderId}
-                >
-                  <option value="">Select model...</option>
-                  {getProviderModels(generateProviderId).map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    value={generateModel}
+                    onChange={(e) => {
+                      setGenerateModel(e.target.value);
+                      setGenerateModelOpen(true);
+                      setGenerateModelActiveIndex(0);
+                    }}
+                    onFocus={() => setGenerateModelOpen(true)}
+                    onKeyDown={(e) => {
+                      if (!generateModelOpen && e.key === "ArrowDown") {
+                        setGenerateModelOpen(true);
+                        return;
+                      }
+
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setGenerateModelActiveIndex((index) =>
+                          Math.min(index + 1, generateFilteredModels.length - 1),
+                        );
+                      }
+
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setGenerateModelActiveIndex((index) =>
+                          Math.max(index - 1, 0),
+                        );
+                      }
+
+                      if (e.key === "Enter" && generateModelOpen) {
+                        const model =
+                          generateFilteredModels[generateModelActiveIndex];
+                        if (model) {
+                          e.preventDefault();
+                          setGenerateModel(model);
+                          setGenerateModelOpen(false);
+                        }
+                      }
+
+                      if (e.key === "Escape") {
+                        setGenerateModelOpen(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      window.setTimeout(
+                        () => setGenerateModelOpen(false),
+                        120,
+                      );
+                    }}
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!generateProviderId}
+                    placeholder="Search model..."
+                  />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  {generateModelOpen && generateProviderId && (
+                    <div className="hide-scrollbar absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                      {generateFilteredModels.length > 0 ? (
+                        generateFilteredModels.map((model, index) => (
+                          <button
+                            key={model}
+                            id={`generate-model-option-${index}`}
+                            type="button"
+                            title={model}
+                            className={`block w-full truncate rounded px-2 py-1.5 text-left font-mono text-xs hover:bg-accent hover:text-accent-foreground ${
+                              index === generateModelActiveIndex
+                                ? "bg-accent text-accent-foreground"
+                                : ""
+                            }`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setGenerateModel(model);
+                              setGenerateModelOpen(false);
+                            }}
+                            onMouseEnter={() =>
+                              setGenerateModelActiveIndex(index)
+                            }
+                          >
+                            {model}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-2 py-2 text-xs text-muted-foreground">
+                          No matching models
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {generateProviderId &&
                   getProviderModels(generateProviderId).length === 0 && (
                     <p className="text-[10px] text-yellow-500">
@@ -525,8 +920,10 @@ export default function AdminSettingsPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Providers */}
+      {activeTab === "providers" && (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -539,11 +936,22 @@ export default function AdminSettingsPage() {
           </Button>
         </div>
 
-        {/* Add provider form */}
-        {adding && (
-          <Card className="border shadow-sm border-primary/30">
-            <div className="p-4 space-y-4">
-              <h3 className="font-semibold text-sm">New Provider</h3>
+        <AlertDialog
+          open={adding}
+          onOpenChange={(open) => {
+            setAdding(open);
+            if (!open) resetNewProviderForm();
+          }}
+        >
+          <AlertDialogContent className="hide-scrollbar max-h-[90vh] max-w-4xl overflow-y-auto">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Add Provider</AlertDialogTitle>
+              <AlertDialogDescription>
+                Fetch models first to validate the Base URL and API key before
+                saving this provider.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">
@@ -552,9 +960,10 @@ export default function AdminSettingsPage() {
                   <input
                     type="text"
                     value={newProvider.name}
-                    onChange={(e) =>
-                      setNewProvider((p) => ({ ...p, name: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      resetNewProviderValidation();
+                      setNewProvider((p) => ({ ...p, name: e.target.value }));
+                    }}
                     placeholder="e.g. Groq"
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
@@ -566,9 +975,13 @@ export default function AdminSettingsPage() {
                   <input
                     type="text"
                     value={newProvider.base_url}
-                    onChange={(e) =>
-                      setNewProvider((p) => ({ ...p, base_url: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      resetNewProviderValidation();
+                      setNewProvider((p) => ({
+                        ...p,
+                        base_url: e.target.value,
+                      }));
+                    }}
                     placeholder="https://api.groq.com/openai/v1"
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
@@ -580,9 +993,13 @@ export default function AdminSettingsPage() {
                   <input
                     type="password"
                     value={newProvider.api_key}
-                    onChange={(e) =>
-                      setNewProvider((p) => ({ ...p, api_key: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      resetNewProviderValidation();
+                      setNewProvider((p) => ({
+                        ...p,
+                        api_key: e.target.value,
+                      }));
+                    }}
                     placeholder="API key"
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
@@ -599,15 +1016,16 @@ export default function AdminSettingsPage() {
                     variant="ghost"
                     size="sm"
                     className="h-6 text-xs px-2"
-                    onClick={() =>
+                    onClick={() => {
+                      resetNewProviderValidation();
                       setNewProvider((p) => ({
                         ...p,
                         custom_headers: [
                           ...p.custom_headers,
                           { key: "", value: "" },
                         ],
-                      }))
-                    }
+                      }));
+                    }}
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Add
@@ -621,6 +1039,7 @@ export default function AdminSettingsPage() {
                           type="text"
                           value={h.key}
                           onChange={(e) => {
+                            resetNewProviderValidation();
                             const updated = [...newProvider.custom_headers];
                             updated[i] = { ...updated[i], key: e.target.value };
                             setNewProvider((p) => ({
@@ -635,6 +1054,7 @@ export default function AdminSettingsPage() {
                           type="text"
                           value={h.value}
                           onChange={(e) => {
+                            resetNewProviderValidation();
                             const updated = [...newProvider.custom_headers];
                             updated[i] = { ...updated[i], value: e.target.value };
                             setNewProvider((p) => ({
@@ -650,6 +1070,7 @@ export default function AdminSettingsPage() {
                           size="icon"
                           className="h-8 w-8 shrink-0 text-destructive"
                           onClick={() => {
+                            resetNewProviderValidation();
                             const updated = newProvider.custom_headers.filter(
                               (_, idx) => idx !== i,
                             );
@@ -667,13 +1088,90 @@ export default function AdminSettingsPage() {
                 )}
               </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="rounded-md border bg-muted/20 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      {isNewProviderValidated ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <p className="text-sm font-medium">
+                        {isNewProviderValidated
+                          ? "Provider validated"
+                          : "Validate provider first"}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isNewProviderValidated
+                        ? `${newProviderModels.length} models ready to save.`
+                        : "Fetch models to verify the Base URL and API key before adding."}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestNewProvider}
+                    disabled={testingNewProvider}
+                  >
+                    {testingNewProvider ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-1.5" />
+                    )}
+                    Fetch Models
+                  </Button>
+                </div>
+
+                {newProviderModels.length > 0 && (
+                  <div className="mt-3 rounded-md border bg-background/60 p-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Models
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => copyModels(newProviderModels)}
+                      >
+                        <Copy className="h-3.5 w-3.5 mr-1.5" />
+                        Copy
+                      </Button>
+                    </div>
+                    <div className="hide-scrollbar grid max-h-[40vh] grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
+                      {newProviderModels.map((model) => (
+                        <div
+                          key={model}
+                          title={model}
+                          className="group flex min-w-0 items-center gap-2 rounded border bg-muted/40 px-2 py-1.5 font-mono text-xs text-muted-foreground"
+                        >
+                          <span className="block min-w-0 flex-1 truncate">
+                            {model}
+                          </span>
+                          <button
+                            type="button"
+                            className="shrink-0 text-muted-foreground opacity-60 transition hover:text-foreground group-hover:opacity-100"
+                            onClick={() => copyModel(model)}
+                            aria-label={`Copy ${model}`}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <AlertDialogFooter>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
                     setAdding(false);
-                    setNewProvider({ name: "", base_url: "", api_key: "", custom_headers: [] });
+                    resetNewProviderForm();
                   }}
                 >
                   Cancel
@@ -681,7 +1179,7 @@ export default function AdminSettingsPage() {
                 <Button
                   size="sm"
                   onClick={handleAddProvider}
-                  disabled={savingProvider === "new"}
+                  disabled={savingProvider === "new" || !isNewProviderValidated}
                 >
                   {savingProvider === "new" ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
@@ -690,10 +1188,10 @@ export default function AdminSettingsPage() {
                   )}
                   Add
                 </Button>
-              </div>
+              </AlertDialogFooter>
             </div>
-          </Card>
-        )}
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Provider list */}
         {providers.length === 0 ? (
@@ -957,18 +1455,47 @@ export default function AdminSettingsPage() {
                     {/* Cached models preview */}
                     {provider.models.length > 0 && (
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          Cached Models ({provider.models.length})
-                        </label>
-                        <div className="max-h-32 overflow-y-auto rounded-md border bg-muted/30 p-2 space-y-0.5">
-                          {provider.models.map((m) => (
-                            <p
-                              key={m}
-                              className="text-xs text-muted-foreground font-mono truncate"
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-medium text-muted-foreground">
+                            Cached Models
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">
+                              {provider.models.length}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2"
+                              onClick={() => copyModels(provider.models)}
                             >
-                              {m}
-                            </p>
+                              <Copy className="h-3.5 w-3.5 mr-1.5" />
+                              Copy
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="rounded-md border bg-muted/20 p-2">
+                          <div className="hide-scrollbar grid max-h-[32vh] grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                          {provider.models.map((model) => (
+                            <div
+                              key={model}
+                              title={model}
+                              className="group flex min-w-0 items-center gap-2 rounded border bg-background/60 px-2 py-1.5 font-mono text-xs text-muted-foreground"
+                            >
+                              <span className="block min-w-0 flex-1 truncate">
+                                {model}
+                              </span>
+                              <button
+                                type="button"
+                                className="shrink-0 text-muted-foreground opacity-60 transition hover:text-foreground group-hover:opacity-100"
+                                onClick={() => copyModel(model)}
+                                aria-label={`Copy ${model}`}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           ))}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -994,6 +1521,7 @@ export default function AdminSettingsPage() {
           })
         )}
       </div>
+      )}
 
       {/* Delete Confirmation */}
       <AlertDialog
