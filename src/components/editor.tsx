@@ -11,9 +11,6 @@ import {
   EditorBubbleItem,
   ImageResizer,
   handleCommandNavigation,
-  handleImageDrop,
-  handleImagePaste,
-  createImageUpload,
   TiptapImage,
   TiptapLink,
   TiptapUnderline,
@@ -25,6 +22,7 @@ import {
   Placeholder,
   Command,
   renderItems,
+  useEditor,
   type JSONContent,
 } from "novel";
 import { useState } from "react";
@@ -44,41 +42,56 @@ import {
   Strikethrough,
   CodeIcon,
   Underline as UnderlineIcon,
+  Link as LinkIcon,
+  Minus,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 // ============================================
 // Image upload
 // ============================================
-const uploadFn = createImageUpload({
-  onUpload: async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+async function uploadImageFile(file: File): Promise<string | null> {
+  if (!file.type.includes("image/")) {
+    toast.error("File type not supported.");
+    return null;
+  }
+  if (file.size / 1024 / 1024 > 5) {
+    toast.error("File size too big (max 5MB).");
+    return null;
+  }
 
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
+  const formData = new FormData();
+  formData.append("file", file);
 
-    if (!res.ok) {
-      throw new Error("Upload failed");
-    }
-
+  try {
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    if (!res.ok) throw new Error("Upload failed");
     const data = await res.json();
-    return data.url;
-  },
-  validateFn: (file: File) => {
-    if (!file.type.includes("image/")) {
-      toast.error("File type not supported.");
-      return false;
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      toast.error("File size too big (max 5MB).");
-      return false;
-    }
-    return true;
-  },
-});
+    return data.url || null;
+  } catch (err) {
+    console.error(err);
+    toast.error("Upload failed");
+    return null;
+  }
+}
+
+async function insertImageAtCursor(editor: any, file: File) {
+  const url = await uploadImageFile(file);
+  if (!url) return;
+  editor.chain().focus().setImage({ src: url }).run();
+}
+
+async function insertImageAtViewPos(view: any, pos: number, file: File) {
+  const url = await uploadImageFile(file);
+  if (!url) return;
+  const { schema } = view.state;
+  const node = schema.nodes.image?.create({ src: url });
+  if (!node) return;
+  const tr = view.state.tr.insert(pos, node);
+  view.dispatch(tr);
+}
 
 // ============================================
 // Extensions config (from Novel docs)
@@ -87,6 +100,13 @@ const tiptapLink = TiptapLink.configure({
   HTMLAttributes: {
     class:
       "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
+  },
+});
+
+const tiptapImage = TiptapImage.configure({
+  allowBase64: true,
+  HTMLAttributes: {
+    class: "rounded-lg border border-muted",
   },
 });
 
@@ -274,9 +294,7 @@ const suggestionItems = [
       input.accept = "image/*";
       input.onchange = async () => {
         if (input.files?.length) {
-          const file = input.files[0];
-          const pos = editor.view.state.selection.from;
-          uploadFn(file, editor.view, pos);
+          await insertImageAtCursor(editor, input.files[0]);
         }
       };
       input.click();
@@ -297,7 +315,7 @@ const extensions = [
   starterKit,
   placeholder,
   tiptapLink,
-  TiptapImage,
+  tiptapImage,
   TiptapUnderline,
   UpdatedImage,
   taskList,
@@ -305,6 +323,214 @@ const extensions = [
   horizontalRule,
   slashCommand,
 ];
+
+// ============================================
+// Fixed toolbar
+// ============================================
+function ToolbarButton({
+  onClick,
+  active,
+  disabled,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 ${
+        active ? "bg-accent text-foreground" : ""
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ToolbarSeparator() {
+  return <div className="mx-1 h-5 w-px bg-border" />;
+}
+
+function EditorToolbar() {
+  const { editor } = useEditor();
+  if (!editor) return null;
+
+  const promptLink = () => {
+    const previous = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("URL", previous || "https://");
+    if (url === null) return;
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  };
+
+  const pickImage = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async () => {
+      if (input.files?.length) {
+        await insertImageAtCursor(editor, input.files[0]);
+      }
+    };
+    input.click();
+  };
+
+  return (
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 border-b bg-background/95 px-2 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+      <ToolbarButton
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().undo()}
+        title="Undo"
+      >
+        <Undo2 className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().redo()}
+        title="Redo"
+      >
+        <Redo2 className="h-4 w-4" />
+      </ToolbarButton>
+
+      <ToolbarSeparator />
+
+      <ToolbarButton
+        onClick={() =>
+          editor.chain().focus().toggleHeading({ level: 1 }).run()
+        }
+        active={editor.isActive("heading", { level: 1 })}
+        title="Heading 1"
+      >
+        <Heading1 className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() =>
+          editor.chain().focus().toggleHeading({ level: 2 }).run()
+        }
+        active={editor.isActive("heading", { level: 2 })}
+        title="Heading 2"
+      >
+        <Heading2 className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() =>
+          editor.chain().focus().toggleHeading({ level: 3 }).run()
+        }
+        active={editor.isActive("heading", { level: 3 })}
+        title="Heading 3"
+      >
+        <Heading3 className="h-4 w-4" />
+      </ToolbarButton>
+
+      <ToolbarSeparator />
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        active={editor.isActive("bold")}
+        title="Bold (Ctrl+B)"
+      >
+        <Bold className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        active={editor.isActive("italic")}
+        title="Italic (Ctrl+I)"
+      >
+        <Italic className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        active={editor.isActive("underline")}
+        title="Underline (Ctrl+U)"
+      >
+        <UnderlineIcon className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        active={editor.isActive("strike")}
+        title="Strikethrough"
+      >
+        <Strikethrough className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        active={editor.isActive("code")}
+        title="Inline code"
+      >
+        <CodeIcon className="h-4 w-4" />
+      </ToolbarButton>
+
+      <ToolbarSeparator />
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        active={editor.isActive("bulletList")}
+        title="Bullet list"
+      >
+        <List className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        active={editor.isActive("orderedList")}
+        title="Numbered list"
+      >
+        <ListOrdered className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleTaskList().run()}
+        active={editor.isActive("taskList")}
+        title="To-do list"
+      >
+        <CheckSquare className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        active={editor.isActive("blockquote")}
+        title="Quote"
+      >
+        <TextQuote className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        active={editor.isActive("codeBlock")}
+        title="Code block"
+      >
+        <Code className="h-4 w-4" />
+      </ToolbarButton>
+
+      <ToolbarSeparator />
+
+      <ToolbarButton
+        onClick={promptLink}
+        active={editor.isActive("link")}
+        title="Link"
+      >
+        <LinkIcon className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={pickImage} title="Image">
+        <ImageIcon className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        title="Divider"
+      >
+        <Minus className="h-4 w-4" />
+      </ToolbarButton>
+    </div>
+  );
+}
 
 // ============================================
 // Editor component
@@ -327,7 +553,7 @@ export default function NovelEditor({
       <EditorContent
         initialContent={initialContent}
         extensions={extensions}
-        className="relative w-full border rounded-md bg-background"
+        className="relative w-full overflow-hidden rounded-md border bg-background"
         editorProps={{
           handleDOMEvents: {
             keydown: (_view: any, event: any) => {
@@ -338,10 +564,41 @@ export default function NovelEditor({
               return false;
             },
           },
-          handlePaste: (view: any, event: any) =>
-            handleImagePaste(view, event, uploadFn),
-          handleDrop: (view: any, event: any, _slice: any, moved: any) =>
-            handleImageDrop(view, event, moved, uploadFn),
+          handlePaste: (view: any, event: any) => {
+            const files = event.clipboardData?.files;
+            if (files && files.length) {
+              const file = Array.from(files).find((f: any) =>
+                f.type?.includes("image/"),
+              ) as File | undefined;
+              if (file) {
+                event.preventDefault();
+                const pos = view.state.selection.from;
+                insertImageAtViewPos(view, pos, file);
+                return true;
+              }
+            }
+            return false;
+          },
+          handleDrop: (view: any, event: any, _slice: any, moved: any) => {
+            if (moved) return false;
+            const files = event.dataTransfer?.files;
+            if (files && files.length) {
+              const file = Array.from(files).find((f: any) =>
+                f.type?.includes("image/"),
+              ) as File | undefined;
+              if (file) {
+                event.preventDefault();
+                const coords = view.posAtCoords({
+                  left: event.clientX,
+                  top: event.clientY,
+                });
+                const pos = coords?.pos ?? view.state.selection.from;
+                insertImageAtViewPos(view, pos, file);
+                return true;
+              }
+            }
+            return false;
+          },
           attributes: {
             class:
               "prose prose-sm dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full min-h-[500px] p-4",
@@ -358,6 +615,7 @@ export default function NovelEditor({
             onHtmlChange(editor.getHTML());
           }
         }}
+        slotBefore={<EditorToolbar />}
         slotAfter={<ImageResizer />}
       >
         {/* Slash command menu */}
