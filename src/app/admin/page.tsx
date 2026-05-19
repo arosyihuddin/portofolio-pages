@@ -172,13 +172,23 @@ export default function AdminDashboard() {
             titleMap[p.slug] = p.title;
           });
 
-          sorted.forEach((s) => {
-            const slug = s.path.replace("/blog/", "");
-            s.title = titleMap[slug] || slug;
-          });
-        }
+          const filteredTopPosts = sorted
+            .filter((s) => {
+              const slug = s.path.replace("/blog/", "");
+              return Boolean(titleMap[slug]);
+            })
+            .map((s) => {
+              const slug = s.path.replace("/blog/", "");
+              return {
+                ...s,
+                title: titleMap[slug],
+              };
+            });
 
-        setTopPosts(sorted);
+          setTopPosts(filteredTopPosts);
+        } else {
+          setTopPosts([]);
+        }
       }
 
       setLoading(false);

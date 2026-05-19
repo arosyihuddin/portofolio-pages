@@ -47,6 +47,7 @@ export default function AdminBlogList() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
+    slug: string;
     title: string;
   } | null>(null);
   const supabase = createClient();
@@ -76,12 +77,13 @@ export default function AdminBlogList() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
 
-    const { id } = deleteTarget;
+    const { id, slug } = deleteTarget;
     setDeleting(id);
     setDeleteTarget(null);
 
     // Delete post-tag relations first
     await supabase.from("blog_post_tags").delete().eq("post_id", id);
+    await supabase.from("page_views").delete().eq("path", `/blog/${slug}`);
     const { error } = await supabase.from("blog_posts").delete().eq("id", id);
 
     if (error) {
@@ -254,7 +256,11 @@ export default function AdminBlogList() {
                     title="Delete"
                     className="text-destructive hover:text-destructive"
                     onClick={() =>
-                      setDeleteTarget({ id: post.id, title: post.title })
+                      setDeleteTarget({
+                        id: post.id,
+                        slug: post.slug,
+                        title: post.title,
+                      })
                     }
                     disabled={deleting === post.id}
                   >

@@ -4,13 +4,14 @@ import {
   getReadingTime,
   extractHeadings,
   addHeadingIds,
+  getPostViewCount,
 } from "@/data/blog";
 import { DATA } from "@/data/resume";
 import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Calendar, Eye } from "lucide-react";
 import TocSidebar from "@/components/toc-sidebar";
 
 export const revalidate = 60;
@@ -64,7 +65,10 @@ export default async function BlogPostPage({
   const readingTime = getReadingTime(post.content);
   const headings = extractHeadings(post.content);
   const contentWithIds = addHeadingIds(post.content);
-  const adjacent = await getAdjacentPosts(post.published_at);
+  const [adjacent, viewCount] = await Promise.all([
+    getAdjacentPosts(post.published_at),
+    getPostViewCount(post.slug),
+  ]);
 
   return (
     <main className="flex flex-col min-h-[100dvh] pb-28">
@@ -141,6 +145,10 @@ export default async function BlogPostPage({
             <span className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
               {readingTime} min read
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Eye className="h-3.5 w-3.5" />
+              {viewCount.toLocaleString()} views
             </span>
           </div>
         </header>

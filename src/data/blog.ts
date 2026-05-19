@@ -20,6 +20,22 @@ export interface BlogTag {
   slug: string;
 }
 
+export async function getPostViewCount(slug: string): Promise<number> {
+  const supabase = createClient();
+
+  const { count, error } = await supabase
+    .from("page_views")
+    .select("id", { count: "exact", head: true })
+    .eq("path", `/blog/${slug}`);
+
+  if (error) {
+    console.error("Error fetching post view count:", error);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
 /**
  * Calculate reading time from HTML content
  */

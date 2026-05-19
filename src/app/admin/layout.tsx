@@ -7,6 +7,7 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   FileText,
+  Tags,
   Brain,
   Settings,
   LogOut,
@@ -21,6 +22,7 @@ import { Toaster } from "sonner";
 const NAV_ITEMS = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/blog", icon: FileText, label: "Blog Posts" },
+  { href: "/admin/tags", icon: Tags, label: "Tags" },
   { href: "/admin/context", icon: Brain, label: "AI Context" },
   { href: "/admin/settings", icon: Settings, label: "LLM Settings" },
 ];
